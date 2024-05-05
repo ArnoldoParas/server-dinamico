@@ -4,7 +4,7 @@
 To do:
 
 - [x] Reformar el codigo para exponer la informacion en tablas
-- [ ] Añadir libreria Tokio codigo asincrono
-- [ ] Añadir libreria Tungstenite para websocket
+- [x] Añadir libreria Tokio codigo asincrono
+- [x] Añadir libreria Tungstenite para websocket
 - [ ] Actualizar informacion de forma dinamica
 - [ ] Crear algoritmo de ranking
