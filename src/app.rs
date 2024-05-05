@@ -34,43 +34,61 @@ impl App {
     ui.horizontal(|ui| {
       ui.add_space(ui.available_width());
   });
+
     let mut count:u8 = 0;
     if self.clients_info.len() != 0 {
-      for i in &self.clients_info {
-        egui::CollapsingHeader::new(RichText::new(&i.client_name)).id_source(count.to_string()).show(ui, |ui| {
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("CPU model:");
-              ui.label(RichText::new(&i.cpu_model));
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("Frequency:");
-              ui.label(RichText::new(&i.cpu_freq));
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("Physical cores:");
-              ui.label(RichText::new(&i.physical_cores));
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("Total memory:");
-              ui.label(RichText::new(&i.total_memory));
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("Os:");
-              ui.label(RichText::new(&i.os));
-            });
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-              ui.label("Os version:");
-              ui.label(RichText::new(&i.os_version));
-            });
+      egui::Grid::new("test")
+      .min_col_width(100.0)
+      .striped(true)
+      .show(ui, |ui|{
+        ui.vertical_centered(|ui| {
+          ui.label("Client name");
         });
-        count += 1;
-      }
+        ui.vertical_centered(|ui| {
+          ui.label("CPU model");
+        });
+        ui.vertical_centered(|ui| {
+          ui.label("Frequency");
+        });
+        ui.vertical_centered(|ui| {
+          ui.label("Physical cores");
+        });
+        ui.vertical_centered(|ui| {
+          ui.label("Total memory");
+        });
+        ui.vertical_centered(|ui| {
+          ui.label("OS");
+        });
+        ui.vertical_centered(|ui| {
+          ui.label("OS version");
+        });
+        ui.end_row();
+        for i in &self.clients_info {
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.client_name));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.cpu_model));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.cpu_freq));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.physical_cores));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.total_memory));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.os));
+          });
+          ui.vertical_centered(|ui| {
+            ui.label(RichText::new(&i.os_version));
+          });
+          ui.end_row();
+          count += 1;
+        }
+      });
     }
   }
 
@@ -157,5 +175,6 @@ impl eframe::App for App {
     });
 
     self.handle_tcp_data();
+    ctx.request_repaint();
   }
 }
