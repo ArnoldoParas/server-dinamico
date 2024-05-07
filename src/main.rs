@@ -1,9 +1,9 @@
 use server::app::App;
 use std::{
-    // io::{prelude::*, BufReader}, 
     net::TcpListener,  
     thread,
-    sync::mpsc
+    sync::mpsc,
+    time::Duration
 };
 use tungstenite::accept;
 
@@ -31,26 +31,37 @@ fn main() -> eframe::Result<()> {
 }
 
 fn tcp_listener_thread(listener: TcpListener, tx: mpsc::Sender<String>) {
+    let mut id: u32 = 0; 
     for stream in listener.incoming() {
         let ws = accept(stream.unwrap()).expect("Failed to accept");
-        thread::spawn(move|| {
-            handle_connection(ws)
+        let tx_clone = tx.clone();
+        thread::spawn(move || {
+            handle_connection(ws, tx_clone, id)
         });
-        // let mut stream = stream.unwrap();
-        // let mut buf_reader = BufReader::new(&mut stream);
-        // let mut request_data = String::new();
-        // buf_reader.read_to_string(&mut request_data).unwrap();
-
-
-        // println!("{request_data}");
-        // tx.send(request_data).unwrap();
+        id += 1;
     }
 }
 
-fn handle_connection(mut ws: tungstenite::WebSocket<std::net::TcpStream>) {
-    println!("por si acaso");
+fn handle_connection(mut ws: tungstenite::WebSocket<std::net::TcpStream>, tx: mpsc::Sender<String>, id: u32) {
+    let mut register = String::from("");
     loop {
-        let msg = ws.read().expect("Failed to read message");
+        let msg = match ws.read() {
+            Ok(msg) => msg,
+            Err(_) => {
+                let msg = tungstenite::Message::Text(register);
+                let msg = format!("{id},{msg},disconnected");
+                eprintln!("Host disconnected");
+                println!("{msg}");
+                tx.send(msg).unwrap();
+                thread::sleep(Duration::from_secs(1));
+                break;
+            }
+        };
+        register = msg
+        .to_string()
+        .to_owned();
+        let msg = format!("{id},{},connected",msg);
         println!("{msg}");
+        tx.send(msg).unwrap();
     }
 }
