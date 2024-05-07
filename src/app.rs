@@ -1,12 +1,13 @@
 use std::sync::mpsc;
 use sysinfo::System;
 use egui::{RichText, ScrollArea};
+use std::collections::HashMap;
 
 // #[derive(Default)]
 pub struct App {
   info: SystemInfo,
   receiver: mpsc::Receiver<String>,
-  clients_info: Vec<SystemInfo>
+  clients: HashMap<u32, Vec<String>>
 }
 
 impl App {
@@ -26,7 +27,7 @@ impl App {
         os_version: format!("{}", System::kernel_version().unwrap())
       },
       receiver: rx,
-      clients_info: Vec::new(),
+      clients: HashMap::new()
     }
   }
 
@@ -35,8 +36,8 @@ impl App {
       ui.add_space(ui.available_width());
   });
 
-    let mut count:u8 = 0;
-    if self.clients_info.len() != 0 {
+    // let mut count:u8 = 0;
+    if self.clients.len() != 0 {
       egui::Grid::new("test")
       .min_col_width(100.0)
       .striped(true)
@@ -45,48 +46,47 @@ impl App {
           ui.label("Client name");
         });
         ui.vertical_centered(|ui| {
-          ui.label("CPU model");
+          ui.label("CPU usage");
         });
         ui.vertical_centered(|ui| {
-          ui.label("Frequency");
+          ui.label("RAM usage");
         });
         ui.vertical_centered(|ui| {
-          ui.label("Physical cores");
+          ui.label("Free bandwidth");
         });
         ui.vertical_centered(|ui| {
-          ui.label("Total memory");
+          ui.label("Free disk memory");
         });
         ui.vertical_centered(|ui| {
-          ui.label("OS");
-        });
-        ui.vertical_centered(|ui| {
-          ui.label("OS version");
+          ui.label("Status");
         });
         ui.end_row();
-        for i in &self.clients_info {
+        #[allow(unused)]
+        for (k, v) in &self.clients {
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.client_name));
+            ui.label(RichText::new(&v[0]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.cpu_model));
+            ui.label(RichText::new(&v[1]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.cpu_freq));
+            ui.label(RichText::new(&v[2]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.physical_cores));
+            ui.label(RichText::new(&v[3]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.total_memory));
+            ui.label(RichText::new(&v[4]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.os));
-          });
-          ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&i.os_version));
+            if &v[5] == "connected" {
+              ui.label(RichText::new(&v[5]).color(egui::Color32::GREEN));
+            }
+            else {
+              ui.label(RichText::new(&v[5]).color(egui::Color32::RED));
+            }
           });
           ui.end_row();
-          count += 1;
         }
       });
     }
@@ -94,16 +94,13 @@ impl App {
 
   fn handle_tcp_data(&mut self) {
     while let Ok(data) = self.receiver.try_recv() {
-      let mut iter = data.split(',');
-      self.clients_info.push(SystemInfo {
-        client_name: iter.next().unwrap().to_string(),
-        cpu_model: iter.next().unwrap().to_string(),
-        cpu_freq: iter.next().unwrap().to_string(),
-        physical_cores: iter.next().unwrap().to_string(),
-        total_memory: iter.next().unwrap().to_string(),
-        os: iter.next().unwrap().to_string(),
-        os_version: iter.next().unwrap().to_string()
-      });
+      let mut x = data
+      .split(',')
+      .map(String::from)
+      .collect::<Vec<_>>();
+      let key: u32 = x[0].parse().unwrap();
+      x.remove(0);
+      self.clients.insert(key, x);
     }
   }
 }
