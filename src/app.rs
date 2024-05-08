@@ -49,13 +49,13 @@ impl App {
           ui.label("CPU usage");
         });
         ui.vertical_centered(|ui| {
-          ui.label("RAM usage");
+          ui.label("RAM usage (MB)");
         });
         ui.vertical_centered(|ui| {
-          ui.label("Free bandwidth");
+          ui.label("Free bandwidth (MB)");
         });
         ui.vertical_centered(|ui| {
-          ui.label("Free disk memory");
+          ui.label("Free disk memory (GB)");
         });
         ui.vertical_centered(|ui| {
           ui.label("Status");
@@ -67,7 +67,10 @@ impl App {
             ui.label(RichText::new(&v[0]));
           });
           ui.vertical_centered(|ui| {
-            ui.label(RichText::new(&v[1]));
+            ui.horizontal(|ui| {
+              ui.label(RichText::new(&v[1]));
+              ui.label("%");
+            });
           });
           ui.vertical_centered(|ui| {
             ui.label(RichText::new(&v[2]));
