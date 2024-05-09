@@ -1,11 +1,12 @@
 use server::app::App;
+use tungstenite::accept;
 use std::{
     net::TcpListener,  
     thread,
     sync::mpsc,
     time::Duration
 };
-use tungstenite::accept;
+
 
 
 fn main() -> eframe::Result<()> {
@@ -61,7 +62,6 @@ fn handle_connection(mut ws: tungstenite::WebSocket<std::net::TcpStream>, tx: mp
         .to_string()
         .to_owned();
         let msg = format!("{id},{},connected",msg);
-        println!("{msg}");
         tx.send(msg).unwrap();
     }
 }
