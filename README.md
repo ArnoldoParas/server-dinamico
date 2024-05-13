@@ -1,11 +1,8 @@
 # servidor dinamico para clase de sistemas distribuidos y paralelos
 
 
-To do:
+## Merge server and client 
 
-- [x] Reformar el codigo para exponer la informacion en tablas
-- [x] Añadir libreria Tokio codigo asincrono
-- [x] Añadir libreria Tungstenite para websocket
-- [x] Actualizar informacion de forma dinamica
-- [x] Crear algoritmo de ranking
-test
+To do list
+- [] Switch from web sockets to generic TCP pull/request format
+  - [] test  
