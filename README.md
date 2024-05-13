@@ -8,3 +8,4 @@ To do:
 - [x] Añadir libreria Tungstenite para websocket
 - [x] Actualizar informacion de forma dinamica
 - [x] Crear algoritmo de ranking
+test
