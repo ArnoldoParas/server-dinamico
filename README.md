@@ -7,4 +7,4 @@ To do:
 - [x] Añadir libreria Tokio codigo asincrono
 - [x] Añadir libreria Tungstenite para websocket
 - [x] Actualizar informacion de forma dinamica
-- [ ] Crear algoritmo de ranking
+- [x] Crear algoritmo de ranking
