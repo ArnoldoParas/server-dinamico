@@ -5,8 +5,8 @@
 
 To do list
 - [ ] Switch from web sockets to generic TCP pull/request format
-  - [ ] Create module fot the Tcp server
-  - [ ] Create test module
+  - [x] Create module fot the Tcp server
+  - [x] Create test module
   - [ ] Create the TCP pull/request template
   - [ ] Implement class metods and test
   - [ ] Optimize the prototype
