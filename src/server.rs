@@ -11,6 +11,7 @@ mod tests;
 struct Server {
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
+    switch_mode: Arc<Mutex<bool>>,
 }
 
 pub struct ServerWrapper {
@@ -31,20 +32,27 @@ impl ServerWrapper {
     pub fn new() -> ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
-                current_ip: Arc::new(Mutex::new(String::from("192.168.100.31:3012"))),
+                current_ip: Arc::new(Mutex::new(String::from("10.100.33.76:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
+                switch_mode: Arc::new(Mutex::new(false))
             }),
         }
     }
 
     pub fn run(&self) {
-        let server_clone = self.server.clone();
+        let server_clone_1 = self.server.clone();
         thread::spawn(move || {
-            let mut state = false;
+            let mut state = true;
             loop {
+                let server_clone_2 = server_clone_1.clone();
                 match state {
-                    false => state = server_clone.host_server(),
-                    true => state = server_clone.tcp_server(),
+                    false => state = server_clone_1.host_server(),
+                    true => {
+                        thread::spawn(move|| {
+                            server_clone_2.pulse();
+                        });
+                        state = server_clone_1.tcp_server()
+                    },
                 }
                 thread::sleep(Duration::from_secs(1));
             }
@@ -123,43 +131,30 @@ impl Server {
         let listener = TcpListener::bind(&addr).unwrap();
         println!("---\nListening on {}\n---", &addr);
 
-        let switch = Arc::new(Mutex::new(false));
-        let switch_clone = switch.clone();
-        let srv = Arc::new(self);
+        for stream in listener.incoming() {
+            {
+                let signal = self.termination_signal.lock().expect("Fallo en checar la señal");
+                if *signal {
+                    break;
+                }
+            }
 
-        thread::spawn(move || {
-            pulse(srv);
-        });
+            let stream = stream.expect("Fallo en inicial el stream");
+            let guard = self.switch_mode.lock().unwrap();
+            if *guard{
+                // switch_connection(stream, &mut hosts, ip_clone);
+                continue; 
+            };
+            // handle_conecction(stream, &mut hosts);
+        }
 
         false
     }
+
+    fn pulse(&self) {
+        loop {
+            println!("hi from pulse");
+            thread::sleep(Duration::from_secs(1));
+        }
+    }
 }
-
-fn pulse(srv: Arc<&Server>) {
-    ()
-}
-
-//     thread::spawn(move ||{
-//         clk(switch_clone, termination_signal_clone, ip_clonee);
-//     });
-
-//     for stream in listener.incoming() {
-//         {
-//             let signal = termination_signal.lock().expect("Fallo en checar la señal");
-//             if *signal {
-//                 break;
-//             }
-//         }
-        
-//         let stream = stream.expect("Fallo en inicial el strea?");
-//         let lock = switch.lock().unwrap();
-//         if *lock{
-//             let ip_clone = ip.clone();
-//             switch_connection(stream, &mut hosts, ip_clone);
-//             continue; 
-//         };
-//         handle_conecction(stream, &mut hosts);
-//     }
-//     thread::spawn(|| {
-//         host(ip);
-//     });
