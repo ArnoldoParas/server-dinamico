@@ -73,7 +73,8 @@ impl Server {
 
         let ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         
-        let mut request = String::from("NoId\nH1\nH2");
+        let mut id = String::from("NoId");
+        let mut request = String::from(&id);
         loop {
             let mut stream;
             match TcpStream::connect(&ip) {
@@ -106,11 +107,11 @@ impl Server {
                 println!("{:#?}", temp_hashmap);
                 temp_hashmap
             };
-            // println!("Response: {:#?}", http_response);
-            let mut system_info;
+
+
             if http_response.get("State").unwrap() != "OK" {
-                system_info = sysinfo();
-                request = format!("{}\n{}", http_response.get("Id").unwrap(), system_info);
+                id = http_response.get("Id").unwrap().to_owned();
+                request = format!("{}", id);
             }
             if http_response.get("SwitchToServer").unwrap() == "true" {
                 {
@@ -121,6 +122,7 @@ impl Server {
                 server_mode_switch = true;
                 break;
             }
+            request = format!("{}\n{}", id, sysinfo());
             thread::sleep(Duration::from_millis(1500));
         }
         server_mode_switch
