@@ -11,7 +11,7 @@ use sysinfo::{ System, Networks, Disks};
 mod tests;
 
 struct Server {
-    sender: mpsc::Sender<String>,
+    sender: mpsc::Sender<Vec<String>>,
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
     switch_mode: Arc<Mutex<bool>>,
@@ -32,7 +32,7 @@ impl ServerWrapper {
     // /
     // / let server = ServerWrapper::new();
     // / ```
-    pub fn new(tx: mpsc::Sender<String>) -> ServerWrapper {
+    pub fn new(tx: mpsc::Sender<Vec<String>>) -> ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
@@ -225,6 +225,7 @@ impl Server {
                 } else {
                     response = format!("State: OK\nSwitchToServer: false\nNewServer: None\nId: {}", http_request[0]);
                     println!("----------\nhost ip: {}\n----------\n",stream.peer_addr().unwrap());
+                    self.sender.send(http_request).unwrap();
                 }
             }
         }
