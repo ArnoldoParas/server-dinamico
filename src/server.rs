@@ -107,9 +107,9 @@ impl Server {
                 temp_hashmap
             };
             // println!("Response: {:#?}", http_response);
-
+            let mut system_info;
             if http_response.get("State").unwrap() != "OK" {
-                let system_info = sysinfo();
+                system_info = sysinfo();
                 request = format!("{}\n{}", http_response.get("Id").unwrap(), system_info);
             }
             if http_response.get("SwitchToServer").unwrap() == "true" {
