@@ -1,9 +1,5 @@
 use std::{
-    collections::HashMap, 
-    io::{prelude::*, BufReader}, 
-    net::{TcpListener, TcpStream}, 
-    sync::{mpsc, Arc, Mutex}, thread, 
-    time::Duration
+    collections::HashMap, io::{prelude::*, BufReader}, net::{TcpListener, TcpStream}, ops::Deref, sync::{mpsc, Arc, Mutex}, thread, time::Duration
 };
 use uuid::Uuid;
 
@@ -21,16 +17,16 @@ pub struct ServerWrapper {
 }
 
 impl ServerWrapper {
-    /// Create a new TcpServer. When you create a nwe server it will keep rotating between
-    /// a TcpListener and a TcpStream that will send data.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use server::server::ServerWrapper;
-    ///
-    /// let server = ServerWrapper::new();
-    /// ```
+    // / Create a new TcpServer. When you create a nwe server it will keep rotating between
+    // / a TcpListener and a TcpStream that will send data.
+    // /
+    // / # Examples
+    // /
+    // / ```
+    // / use server::server::ServerWrapper;
+    // /
+    // / let server = ServerWrapper::new();
+    // / ```
     pub fn new(tx: mpsc::Sender<String>) -> ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
@@ -67,17 +63,12 @@ impl Server {
     #[allow(unused)]
     fn host_server(&self) -> bool {
         let mut server_mode_switch = false;
-        {
-            let termination_signal_clone = self.termination_signal.clone();
-            let mut guard = termination_signal_clone.lock().unwrap();
-            *guard = false;
-        }
+
+        manage_mutex(self.termination_signal.clone(), Some(false));
+
         let ip;
-        {
-            let ip_clone = self.current_ip.clone();
-            let guard = ip_clone.lock().unwrap();
-            ip = String::from(&*guard);
-        };
+        ip = manage_mutex(self.current_ip.clone(), None).unwrap();
+        
         let mut request = String::from("NoId\nH1\nH2");
         
         loop {
@@ -121,7 +112,7 @@ impl Server {
                 {
                     let ip_clone = self.current_ip.clone();
                     let mut guard = ip_clone.lock().unwrap();
-                    *guard = format!("{}:3012", stream.local_addr().unwrap().ip().to_string()); //posible fallo
+                    *guard = format!("{}:3012", stream.local_addr().unwrap().ip().to_string());
                 }
                 server_mode_switch = true;
                 break;
@@ -134,11 +125,9 @@ impl Server {
     #[allow(unused)]
     fn tcp_server(&self) -> bool {
         let addr;
-        {
-            let ip_clone = self.current_ip.clone();
-            let guard = ip_clone.lock().unwrap();
-            addr = String::from(&*guard);
-        }
+
+        addr = manage_mutex(self.current_ip.clone(), None).unwrap();
+
         let mut hosts_dir: HashMap<String, String> = HashMap::new();
 
         let listener = TcpListener::bind(&addr).unwrap();
@@ -166,28 +155,21 @@ impl Server {
     }
 
     fn pulse(&self) {
-        let current_ip;
-        {
-            let guard = self.current_ip.lock().unwrap();
-            current_ip = String::from(&*guard);
-        }
+        let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
+
         loop {
             thread::sleep(Duration::from_secs(15));
-            { // If server switch
-                let mut guard = self.switch_mode.lock().unwrap();
-                *guard = true;
-            }
+            // If server switch
+            manage_mutex(self.switch_mode.clone(), Some(true));
+
             thread::sleep(Duration::from_secs(2));
 
-            let mut signal = self.termination_signal.lock().unwrap();
-            *signal = true;
+            manage_mutex(self.termination_signal.clone(), Some(true));
+
             let mut stream = TcpStream::connect(&current_ip).unwrap();
             stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
 
-            {
-                let mut guard = self.switch_mode.lock().unwrap();
-                *guard = false; 
-            }
+            manage_mutex(self.switch_mode.clone(), Some(false));
             break;
         }
     }
@@ -212,7 +194,7 @@ impl Server {
                     .ip()
                     .to_string();
                 println!("host ip: {}", host_ip);
-                if host_ip == dbg!(hosts_dir.get(&http_request[0]).unwrap().to_owned()) {
+                if host_ip == hosts_dir.get(&http_request[0]).unwrap().to_owned() {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!("State: OK\nSwitchToServer: true\nNewServer: None\nId: {}", http_request[0]);
 
@@ -241,5 +223,22 @@ impl Server {
             }
         }
         stream.write_all(response.as_bytes()).unwrap();
+    }
+}
+
+fn manage_mutex<T>(mutex: Arc<Mutex<T>>, data: Option<T>) ->Option<T> 
+where
+    T: Clone
+{
+    let mut guard = mutex.lock().unwrap();
+    let x = (*guard).clone();
+    
+    match data {
+        Some(data) => {
+            let d = data.clone();
+            *guard = d;
+            return Some(data)
+        },
+        None => Some(x)
     }
 }
