@@ -10,3 +10,4 @@ eframe = "0.27.2"
 egui = "0.27.2"
 sysinfo = "0.30.11"
 tungstenite = "0.21.0"
+uuid = {version = "1.8.0", features = ["v4"]}
