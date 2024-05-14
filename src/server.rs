@@ -35,7 +35,7 @@ impl ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
-                current_ip: Arc::new(Mutex::new(String::from("10.100.38.190:3012"))),
+                current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
                 switch_mode: Arc::new(Mutex::new(false))
             }),
@@ -66,7 +66,6 @@ impl ServerWrapper {
 impl Server {
     #[allow(unused)]
     fn host_server(&self) -> bool {
-        println!("hi from host");
         let mut server_mode_switch = false;
         {
             let termination_signal_clone = self.termination_signal.clone();
@@ -134,7 +133,6 @@ impl Server {
    
     #[allow(unused)]
     fn tcp_server(&self) -> bool {
-        println!("hi from tcp");
         let addr;
         {
             let ip_clone = self.current_ip.clone();
@@ -168,7 +166,6 @@ impl Server {
     }
 
     fn pulse(&self) {
-        println!("hi from pulse");
         let current_ip;
         {
             let guard = self.current_ip.lock().unwrap();
