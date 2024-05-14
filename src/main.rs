@@ -1,16 +1,16 @@
 #![allow(unused)]
 use server::app::App;
 use server::server::ServerWrapper;
-use std::{net::TcpListener, sync::mpsc, thread, time::Duration};
+use std::{net::TcpListener, sync::mpsc::{self, Receiver, Sender}, thread, time::Duration};
 // use tungstenite::accept;
 
-fn main() { //-> eframe::Result<()>
-    let (tx, _rx) = mpsc::channel();
+fn main() -> eframe::Result<()>{
+    let (tx, rx) = mpsc::channel(); //: (Sender<Vec<String>>, Receiver<String>)
 
-    // let native_options = eframe::NativeOptions {
-    //     viewport: egui::ViewportBuilder::default().with_inner_size([1100.0, 550.0]),
-    //     ..Default::default()
-    // };
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_inner_size([1100.0, 550.0]),
+        ..Default::default()
+    };
 
     // let listener = TcpListener::bind("0.0.0.0:5432").unwrap();
     // let listener_clone = listener.try_clone().expect("Failed to clone listener");
@@ -20,12 +20,11 @@ fn main() { //-> eframe::Result<()>
     let server = ServerWrapper::new(tx);
     server.run();
 
-    // eframe::run_native(
-    //     "status",
-    //     native_options,
-    //     Box::new(|cc| Box::new(App::new(cc, rx))),
-    // )
-    loop{}
+    eframe::run_native(
+        "status",
+        native_options,
+        Box::new(|cc| Box::new(App::new(cc, rx))),
+    )
 }
 
 // fn tcp_listener_thread(listener: TcpListener, tx: mpsc::Sender<String>) {
