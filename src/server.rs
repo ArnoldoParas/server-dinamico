@@ -1,7 +1,12 @@
 use std::{
-    collections::HashMap, io::{prelude::*, BufReader}, net::{TcpListener, TcpStream}, ops::Deref, sync::{mpsc, Arc, Mutex}, thread, time::Duration
+    collections::HashMap, 
+    io::{prelude::*, BufReader}, 
+    net::{TcpListener, TcpStream, Shutdown}, 
+    sync::{mpsc, Arc, Mutex}, 
+    thread, time::Duration
 };
 use uuid::Uuid;
+use sysinfo::{ System, Networks, Disks};
 
 mod tests;
 
@@ -66,11 +71,9 @@ impl Server {
 
         manage_mutex(self.termination_signal.clone(), Some(false));
 
-        let ip;
-        ip = manage_mutex(self.current_ip.clone(), None).unwrap();
+        let ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         
         let mut request = String::from("NoId\nH1\nH2");
-        
         loop {
             let mut stream;
             match TcpStream::connect(&ip) {
@@ -83,7 +86,7 @@ impl Server {
             stream
                 .write_all(request.as_bytes())
                 .expect("fallo en enviar el mensaje");
-            stream.shutdown(std::net::Shutdown::Write).unwrap();
+            stream.shutdown(Shutdown::Write).unwrap();
 
             let buf_reader = BufReader::new(&mut stream);
             let http_response: Vec<_> = buf_reader
@@ -106,7 +109,8 @@ impl Server {
             // println!("Response: {:#?}", http_response);
 
             if http_response.get("State").unwrap() != "OK" {
-                request = format!("{}\nH1\nH2", http_response.get("Id").unwrap());
+                let system_info = sysinfo();
+                request = format!("{}\n{}", http_response.get("Id").unwrap(), system_info);
             }
             if http_response.get("SwitchToServer").unwrap() == "true" {
                 {
@@ -241,4 +245,42 @@ where
         },
         None => Some(x)
     }
+}
+
+fn sysinfo() -> String{
+    #![allow(unused)]
+    let mut sys = System::new_all();
+    let mut bandwith: u64 = 0;
+    let mut freebandwith: u64 = 0;
+    let mut disk_space = 0;
+    sys.refresh_all();
+    
+    let mut networks = Networks::new_with_refreshed_list();
+    for (interface_name, network) in &networks {
+        bandwith = network.total_transmitted() + network.total_received();
+    }
+
+    networks.refresh();
+    for (interface_name, network) in &networks {
+        freebandwith = bandwith - (network.transmitted() + network.received());
+    }
+
+    let disks = Disks::new_with_refreshed_list();
+    for disk in disks.list() {
+        disk_space = disk.available_space()/1_000_000_000;
+        break;
+    }
+
+
+    let cpu = sys.cpus().get(0).unwrap();
+    
+    let sysinfo = format!("{}\n{:.2}\n{}\n{}\n{}\n{}",
+    System::host_name().unwrap(),
+    cpu.cpu_usage(),
+    sys.used_memory()/1_000_000,
+    freebandwith/1_000_000,
+    disk_space,
+    sys.total_memory()/1_000_000
+    );
+    sysinfo
 }
