@@ -184,6 +184,10 @@ impl Server {
             let mut stream = TcpStream::connect(&current_ip).unwrap();
             stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
 
+            {
+                let mut guard = self.switch_mode.lock().unwrap();
+                *guard = false; 
+            }
             break;
         }
     }
@@ -207,7 +211,8 @@ impl Server {
                     .unwrap()
                     .ip()
                     .to_string();
-                if host_ip == hosts_dir.get(&http_request[0]).unwrap().to_owned() {
+                println!("host ip: {}", host_ip);
+                if host_ip == dbg!(hosts_dir.get(&http_request[0]).unwrap().to_owned()) {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!("State: OK\nSwitchToServer: true\nNewServer: None\nId: {}", http_request[0]);
 
