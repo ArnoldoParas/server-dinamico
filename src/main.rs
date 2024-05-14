@@ -1,4 +1,5 @@
 use server::app::App;
+use server::server::ServerWrapper;
 use tungstenite::accept;
 use std::{
     net::TcpListener,  
@@ -18,11 +19,13 @@ fn main() -> eframe::Result<()> {
             ..Default::default()
     };
 
-    let listener = TcpListener::bind("0.0.0.0:5432").unwrap();
-    let listener_clone = listener.try_clone().expect("Failed to clone listener");
-    thread::spawn(move || {
-        tcp_listener_thread(listener_clone, tx)
-    });
+    // let listener = TcpListener::bind("0.0.0.0:5432").unwrap();
+    // let listener_clone = listener.try_clone().expect("Failed to clone listener");
+    // thread::spawn(move || {
+    //     tcp_listener_thread(listener_clone, tx)
+    // });
+    let server = ServerWrapper::new();
+    server.run();
 
     eframe::run_native(
         "status",
