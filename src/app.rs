@@ -6,9 +6,9 @@ use sysinfo::System;
 // #[derive(Default)]
 pub struct App {
     info: SystemInfo,
-    receiver: mpsc::Receiver<String>,
-    clients: HashMap<u32, Vec<String>>,
-    ranked_clients: Vec<(u32, f32)>,
+    receiver: mpsc::Receiver<Vec<String>>,
+    clients: HashMap<String, Vec<String>>,
+    ranked_clients: Vec<(String, f32)>,
 }
 
 struct SystemInfo {
@@ -22,7 +22,7 @@ struct SystemInfo {
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<String>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<Vec<String>>) -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
         let cpu = sys.cpus().get(0).unwrap();
@@ -91,29 +91,29 @@ impl App {
                             };
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(&k).unwrap()[0]));
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[0]));
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(&k).unwrap()[1]));
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[1]));
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(&k).unwrap()[2]));
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[2]));
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(&k).unwrap()[3]));
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[3]));
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(&k).unwrap()[4]));
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[4]));
                         });
                         ui.vertical_centered(|ui| {
-                            if &self.clients.get(&k).unwrap()[6] == "connected" {
+                            if &self.clients.get(k).unwrap()[6] == "connected" {
                                 ui.label(
-                                    RichText::new(&self.clients.get(&k).unwrap()[6])
+                                    RichText::new(&self.clients.get(k).unwrap()[6])
                                         .color(egui::Color32::GREEN),
                                 );
                             } else {
                                 ui.label(
-                                    RichText::new(&self.clients.get(&k).unwrap()[6])
+                                    RichText::new(&self.clients.get(k).unwrap()[6])
                                         .color(egui::Color32::RED),
                                 );
                             }
@@ -125,11 +125,13 @@ impl App {
     }
 
     fn handle_tcp_data(&mut self) {
-        while let Ok(data) = self.receiver.try_recv() {
-            let mut x = data.split(',').map(String::from).collect::<Vec<_>>();
-            let key: u32 = x[0].parse().unwrap();
-            x.remove(0);
-            self.clients.insert(key, x);
+        while let Ok(server_msg) = self.receiver.try_recv() {
+            // let mut x = data.split(',').map(String::from).collect::<Vec<_>>();
+            let mut data = server_msg.clone();
+            let key = data[0].clone();
+            data.remove(0);
+            data.push("connected".to_string());
+            self.clients.insert(key, data);
             println!("----------------------------------------------------");
             println!("{:?}", self.clients);
             self.rank_clients();
