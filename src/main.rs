@@ -9,9 +9,10 @@ use std::{
 };
 
 fn main() -> eframe::Result<()>{
-    let (tx, rx) = mpsc::channel();
+    let (server_tx, server_rx) = mpsc::channel();
+    let (app_tx, app_rx) = mpsc::channel();
 
-    let server = ServerWrapper::new(tx);
+    let server = ServerWrapper::new(server_tx, app_rx);
     server.run();
 
     let native_options = eframe::NativeOptions {
@@ -22,6 +23,6 @@ fn main() -> eframe::Result<()>{
     eframe::run_native(
         "status",
         native_options,
-        Box::new(|cc| Box::new(App::new(cc, rx))),
+        Box::new(|cc| Box::new(App::new(cc, server_rx, app_tx))),
     )
 }

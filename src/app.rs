@@ -1,13 +1,14 @@
 use egui::{RichText, ScrollArea};
-use std::{collections::HashMap, sync::mpsc};
+use std::{collections::HashMap, sync::mpsc::{self, Sender}};
 use sysinfo::System;
 
 // #[derive(Default)]
 pub struct App {
     info: SystemInfo,
-    receiver: mpsc::Receiver<HashMap<String, Vec<String>>>,
     clients: HashMap<String, Vec<String>>,
     ranked_clients: Vec<(String, f32)>,
+    receiver: mpsc::Receiver<HashMap<String, Vec<String>>>,
+    sender: mpsc::Sender<String>,
 }
 
 struct SystemInfo {
@@ -21,7 +22,7 @@ struct SystemInfo {
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<HashMap<String, Vec<String>>>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<HashMap<String, Vec<String>>>, tx: Sender<String>) -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
         let cpu = sys.cpus().get(0).unwrap();
@@ -36,9 +37,10 @@ impl App {
                 os: format!("{}", System::long_os_version().unwrap()),
                 os_version: format!("{}", System::kernel_version().unwrap()),
             },
-            receiver: rx,
             clients: HashMap::new(),
             ranked_clients: Vec::new(),
+            receiver: rx,
+            sender: tx,
         }
     }
 
@@ -124,6 +126,11 @@ impl App {
     }
 
     fn rank_clients(&mut self) {
+        let mut first_place_key = String::new();
+        match self.ranked_clients.is_empty() {
+            true => (),
+            false => first_place_key = self.ranked_clients[0].0.clone(),
+        }
         self.ranked_clients.clear();
         for (k, v) in &self.clients {
             let total_mem = &v[5].to_owned().parse::<f32>().unwrap();
@@ -161,7 +168,6 @@ impl App {
                 x if x > 90.0 && x <= 100.0 => 2.0 * 0.4,
                 _ => 0.0,
             };
-
             let score = cpu_score + ram_score;
 
             self.ranked_clients.push((k.to_owned(), score));
@@ -169,6 +175,15 @@ impl App {
         self.ranked_clients
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         println!("{:?}", self.ranked_clients);
+
+        match first_place_key.is_empty() {
+            true => (),
+            false => {
+                if self.ranked_clients[0].0 != first_place_key {
+                    self.sender.send(self.ranked_clients[0].0.clone()).unwrap();
+                }
+            }
+        }
     }
 
     fn handle_tcp_data(&mut self) {

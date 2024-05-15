@@ -13,10 +13,12 @@ mod tests;
 
 struct Server {
     sender: mpsc::Sender<HashMap<String, Vec<String>>>,
+    reciver: Mutex<mpsc::Receiver<String>>,
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
     switch_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
+    id: String,
 }
 
 pub struct ServerWrapper {
@@ -34,14 +36,16 @@ impl ServerWrapper {
     // /
     // / let server = ServerWrapper::new();
     // / ```
-    pub fn new(tx: mpsc::Sender<HashMap<String, Vec<String>>>) -> ServerWrapper {
+    pub fn new(tx: mpsc::Sender<HashMap<String, Vec<String>>>, rx: mpsc::Receiver<String>) -> ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
+                reciver: Mutex::new(rx),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
                 switch_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
+                id: String::new(),
             }),
         }
     }
@@ -165,25 +169,27 @@ impl Server {
 
     fn pulse(&self) {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
-
+        let guard = self.reciver.lock().unwrap();
+        
         loop {
-            thread::sleep(Duration::from_secs(5));
-            // println!("{:#?}", manage_mutex(self.host_data.clone(), None));
+            thread::sleep(Duration::from_secs(3));
             self.sender
-                .send(manage_mutex(self.host_data.clone(), None).unwrap())
-                .unwrap();
-            // // If server switch
-            // manage_mutex(self.switch_mode.clone(), Some(true));
+            .send(manage_mutex(self.host_data.clone(), None).unwrap())
+            .unwrap();
+            thread::sleep(Duration::from_millis(500));
+            // If server switch
+            if guard.try_recv().unwrap() != "" {
+                manage_mutex(self.switch_mode.clone(), Some(true));
+            }
+            thread::sleep(Duration::from_secs(3));
 
-            // thread::sleep(Duration::from_secs(2));
+            manage_mutex(self.termination_signal.clone(), Some(true));
 
-            // manage_mutex(self.termination_signal.clone(), Some(true));
+            let mut stream = TcpStream::connect(&current_ip).unwrap();
+            stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
 
-            // let mut stream = TcpStream::connect(&current_ip).unwrap();
-            // stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
-
-            // manage_mutex(self.switch_mode.clone(), Some(false));
-            // break;
+            manage_mutex(self.switch_mode.clone(), Some(false));
+            break;
         }
     }
 
