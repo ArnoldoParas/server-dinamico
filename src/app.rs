@@ -1,16 +1,11 @@
-use std::{
-    collections::HashMap,
-    sync::mpsc,
-    thread,
-    time::Duration,
-};
 use egui::{RichText, ScrollArea};
+use std::{collections::HashMap, sync::mpsc};
 use sysinfo::System;
 
 // #[derive(Default)]
 pub struct App {
     info: SystemInfo,
-    receiver: mpsc::Receiver<Vec<String>>,
+    receiver: mpsc::Receiver<HashMap<String, Vec<String>>>,
     clients: HashMap<String, Vec<String>>,
     ranked_clients: Vec<(String, f32)>,
 }
@@ -179,18 +174,13 @@ impl App {
     fn handle_tcp_data(&mut self) {
         match self.receiver.try_recv() {
             Ok(msg) => {
-                let mut data = msg.clone();
-                let key = data[0].clone();
-                data.remove(0);
-                data.push("connected".to_string());
-                self.clients.insert(key, data);
+                self.clients = msg;
                 println!("----------------------------------------------------");
                 println!("{:?}", self.clients);
                 self.rank_clients()
-            },
-            Err(_) => ()
+            }
+            Err(_) => (),
         };
-        // thread::sleep(Duration::from_secs(3));
     }
 }
 
@@ -252,7 +242,7 @@ impl eframe::App for App {
             });
         });
 
-        self.handle_tcp_data();
+        // self.handle_tcp_data();
         ctx.request_repaint();
     }
 }

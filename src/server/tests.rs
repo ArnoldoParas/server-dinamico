@@ -24,5 +24,8 @@ fn m_mutex() {
     let mut modify_copy = modify.clone();
     assert_eq!(manage_mutex(modify, None), Some(false));
     assert_eq!(manage_mutex(modify_copy, Some(true)), Some(true));
-    assert_eq!(manage_mutex(see, Some("Hi :D".to_string())), Some("Hi :D".to_string()));
+    assert_eq!(
+        manage_mutex(see, Some("Hi :D".to_string())),
+        Some("Hi :D".to_string())
+    );
 }
