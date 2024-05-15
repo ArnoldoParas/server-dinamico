@@ -3,7 +3,8 @@ use std::{
     io::{prelude::*, BufReader}, 
     net::{TcpListener, TcpStream, Shutdown}, 
     sync::{mpsc, Arc, Mutex}, 
-    thread, time::Duration
+    thread, 
+    time::Duration,
 };
 use uuid::Uuid;
 use sysinfo::{ System, Networks, Disks};
@@ -164,18 +165,18 @@ impl Server {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
 
         loop {
-            thread::sleep(Duration::from_secs(15));
-            // If server switch
-            manage_mutex(self.switch_mode.clone(), Some(true));
+            // thread::sleep(Duration::from_secs(15));
+            // // If server switch
+            // manage_mutex(self.switch_mode.clone(), Some(true));
 
-            thread::sleep(Duration::from_secs(2));
+            // thread::sleep(Duration::from_secs(2));
 
-            manage_mutex(self.termination_signal.clone(), Some(true));
+            // manage_mutex(self.termination_signal.clone(), Some(true));
 
-            let mut stream = TcpStream::connect(&current_ip).unwrap();
-            stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
+            // let mut stream = TcpStream::connect(&current_ip).unwrap();
+            // stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
 
-            manage_mutex(self.switch_mode.clone(), Some(false));
+            // manage_mutex(self.switch_mode.clone(), Some(false));
             break;
         }
     }
