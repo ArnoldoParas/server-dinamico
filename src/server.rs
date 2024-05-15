@@ -1,10 +1,11 @@
 use std::{
-    collections::HashMap,
-    io::{prelude::*, BufReader},
-    net::{Shutdown, TcpListener, TcpStream},
-    sync::{mpsc, Arc, Mutex},
-    thread,
-    time::Duration,
+    collections::HashMap, 
+    fmt::Error, 
+    io::{prelude::*, BufReader}, 
+    net::{Shutdown, TcpListener, TcpStream}, 
+    sync::{mpsc, Arc, Mutex}, 
+    thread, 
+    time::Duration
 };
 use sysinfo::{Disks, Networks, System};
 use uuid::Uuid;
@@ -178,8 +179,12 @@ impl Server {
             .unwrap();
             thread::sleep(Duration::from_millis(500));
             // If server switch
-            if guard.try_recv().unwrap() != "" {
-                manage_mutex(self.switch_mode.clone(), Some(true));
+            match guard.try_recv() {
+                Ok(_) => {
+                    manage_mutex(self.switch_mode.clone(), Some(true));
+                    ()
+                },
+                Err(_) => (),
             }
             thread::sleep(Duration::from_secs(3));
 
