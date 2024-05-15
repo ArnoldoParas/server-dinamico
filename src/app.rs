@@ -242,7 +242,7 @@ impl eframe::App for App {
             });
         });
 
-        // self.handle_tcp_data();
+        self.handle_tcp_data();
         ctx.request_repaint();
     }
 }

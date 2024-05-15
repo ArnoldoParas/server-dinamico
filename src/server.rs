@@ -237,6 +237,7 @@ impl Server {
                         let mut req = http_request.clone();
                         let k = req[0].clone();
                         req.remove(0);
+                        req.push("connected".to_string());
                         let mut guard = self.host_data
                             .lock()
                             .unwrap();
