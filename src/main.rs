@@ -3,7 +3,8 @@ use server::app::App;
 use server::server::ServerWrapper;
 use std::{net::TcpListener, 
     sync::mpsc::{self, Receiver, Sender}, 
-    thread, time::Duration};
+    thread, 
+    time::Duration};
 
 fn main() -> eframe::Result<()>{
     let (tx, rx) = mpsc::channel();
