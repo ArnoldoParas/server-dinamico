@@ -85,7 +85,7 @@ impl Server {
         let mut request = String::from(&id);
         loop {
             let mut stream;
-            match TcpStream::connect(&ip) {
+            match dbg!(TcpStream::connect(&ip)) {
                 Ok(s) => stream = s,
                 Err(_) => {
                     server_mode_switch = true;
