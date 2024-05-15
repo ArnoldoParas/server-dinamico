@@ -21,7 +21,7 @@ struct SystemInfo {
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<Vec<String>>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<HashMap<String, Vec<String>>>) -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
         let cpu = sys.cpus().get(0).unwrap();

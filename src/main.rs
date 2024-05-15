@@ -1,5 +1,5 @@
 #![allow(unused)]
-// use server::app::App;
+use server::app::App;
 use server::server::ServerWrapper;
 use std::{
     net::TcpListener,
