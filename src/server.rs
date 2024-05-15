@@ -179,22 +179,22 @@ impl Server {
             .unwrap();
             thread::sleep(Duration::from_millis(500));
             // If server switch
-            match guard.try_recv() {
+            match dbg!(guard.try_recv()) {
                 Ok(_) => {
                     manage_mutex(self.switch_mode.clone(), Some(true));
-                    ()
+                    thread::sleep(Duration::from_secs(3));
+
+                    manage_mutex(self.termination_signal.clone(), Some(true));
+        
+                    let mut stream = TcpStream::connect(&current_ip).unwrap();
+                    stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
+        
+                    manage_mutex(self.switch_mode.clone(), Some(false));
+                    break;
                 },
                 Err(_) => (),
             }
-            thread::sleep(Duration::from_secs(3));
 
-            manage_mutex(self.termination_signal.clone(), Some(true));
-
-            let mut stream = TcpStream::connect(&current_ip).unwrap();
-            stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
-
-            manage_mutex(self.switch_mode.clone(), Some(false));
-            break;
         }
     }
 
