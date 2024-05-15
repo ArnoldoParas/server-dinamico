@@ -177,17 +177,20 @@ impl App {
     }
 
     fn handle_tcp_data(&mut self) {
-        while let Ok(server_msg) = self.receiver.try_recv() {
-            // let mut x = data.split(',').map(String::from).collect::<Vec<_>>();
-            let mut data = server_msg.clone();
-            let key = data[0].clone();
-            data.remove(0);
-            data.push("connected".to_string());
-            self.clients.insert(key, data);
-            println!("----------------------------------------------------");
-            println!("{:?}", self.clients);
-            self.rank_clients();
-        }
+        match self.receiver.try_recv() {
+            Ok(msg) => {
+                let mut data = msg.clone();
+                let key = data[0].clone();
+                data.remove(0);
+                data.push("connected".to_string());
+                self.clients.insert(key, data);
+                println!("----------------------------------------------------");
+                println!("{:?}", self.clients);
+                self.rank_clients()
+            },
+            Err(_) => ()
+        };
+        // thread::sleep(Duration::from_secs(3));
     }
 }
 
@@ -249,7 +252,6 @@ impl eframe::App for App {
             });
         });
 
-        thread::sleep(Duration::from_secs(3));
         self.handle_tcp_data();
         ctx.request_repaint();
     }
