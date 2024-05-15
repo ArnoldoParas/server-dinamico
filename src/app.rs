@@ -1,6 +1,10 @@
+use std::{
+    collections::HashMap,
+    sync::mpsc,
+    thread,
+    time::Duration,
+};
 use egui::{RichText, ScrollArea};
-use std::collections::HashMap;
-use std::sync::mpsc;
 use sysinfo::System;
 
 // #[derive(Default)]
@@ -124,20 +128,6 @@ impl App {
         }
     }
 
-    fn handle_tcp_data(&mut self) {
-        while let Ok(server_msg) = self.receiver.try_recv() {
-            // let mut x = data.split(',').map(String::from).collect::<Vec<_>>();
-            let mut data = server_msg.clone();
-            let key = data[0].clone();
-            data.remove(0);
-            data.push("connected".to_string());
-            self.clients.insert(key, data);
-            println!("----------------------------------------------------");
-            println!("{:?}", self.clients);
-            self.rank_clients();
-        }
-    }
-
     fn rank_clients(&mut self) {
         self.ranked_clients.clear();
         for (k, v) in &self.clients {
@@ -181,10 +171,23 @@ impl App {
 
             self.ranked_clients.push((k.to_owned(), score));
         }
-        // Ordenar de mayor a menor por los valores f32
         self.ranked_clients
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         println!("{:?}", self.ranked_clients);
+    }
+
+    fn handle_tcp_data(&mut self) {
+        while let Ok(server_msg) = self.receiver.try_recv() {
+            // let mut x = data.split(',').map(String::from).collect::<Vec<_>>();
+            let mut data = server_msg.clone();
+            let key = data[0].clone();
+            data.remove(0);
+            data.push("connected".to_string());
+            self.clients.insert(key, data);
+            println!("----------------------------------------------------");
+            println!("{:?}", self.clients);
+            self.rank_clients();
+        }
     }
 }
 
@@ -246,6 +249,7 @@ impl eframe::App for App {
             });
         });
 
+        thread::sleep(Duration::from_secs(3));
         self.handle_tcp_data();
         ctx.request_repaint();
     }
