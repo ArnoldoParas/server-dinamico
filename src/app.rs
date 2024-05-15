@@ -131,6 +131,7 @@ impl App {
             true => (),
             false => first_place_key = self.ranked_clients[0].0.clone(),
         }
+
         self.ranked_clients.clear();
         for (k, v) in &self.clients {
             let total_mem = &v[5].to_owned().parse::<f32>().unwrap();
@@ -176,7 +177,7 @@ impl App {
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         println!("{:?}", self.ranked_clients);
 
-        match first_place_key.is_empty() {
+        match dbg!(first_place_key.is_empty()) {
             true => (),
             false => {
                 if self.ranked_clients[0].0 != first_place_key {

@@ -19,7 +19,7 @@ struct Server {
     termination_signal: Arc<Mutex<bool>>,
     switch_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
-    id: String,
+    new_server_id: Arc<Mutex<String>>,
 }
 
 pub struct ServerWrapper {
@@ -46,7 +46,7 @@ impl ServerWrapper {
                 termination_signal: Arc::new(Mutex::new(false)),
                 switch_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
-                id: String::new(),
+                new_server_id: Arc::new(Mutex::new(String::new())),
             }),
         }
     }
@@ -85,7 +85,7 @@ impl Server {
         let mut request = String::from(&id);
         loop {
             let mut stream;
-            match dbg!(TcpStream::connect(&ip)) {
+            match TcpStream::connect(&ip) {
                 Ok(s) => stream = s,
                 Err(_) => {
                     server_mode_switch = true;
@@ -178,10 +178,10 @@ impl Server {
             .send(manage_mutex(self.host_data.clone(), None).unwrap())
             .unwrap();
             thread::sleep(Duration::from_millis(500));
-            // If server switch
             match dbg!(guard.try_recv()) {
-                Ok(_) => {
+                Ok(msg) => {
                     manage_mutex(self.switch_mode.clone(), Some(true));
+                    manage_mutex(self.new_server_id.clone(), Some(msg));
                     thread::sleep(Duration::from_secs(3));
 
                     manage_mutex(self.termination_signal.clone(), Some(true));
@@ -217,9 +217,13 @@ impl Server {
 
         match migration {
             true => {
+                let new_server_ip = hosts_dir.get(&manage_mutex(self.new_server_id.clone(), None).unwrap())
+                    .unwrap()
+                    .to_owned();
+
                 let host_ip = stream.peer_addr().unwrap().ip().to_string();
                 println!("host ip: {}", host_ip);
-                if host_ip == hosts_dir.get(&http_request[0]).unwrap().to_owned() {
+                if host_ip == new_server_ip {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!(
                         "State: OK\nSwitchToServer: true\nNewServer: None\nId: {}",
