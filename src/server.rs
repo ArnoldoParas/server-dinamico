@@ -72,8 +72,8 @@ impl ServerWrapper {
     }
 }
 
+#[allow(unused)]
 impl Server {
-    #[allow(unused)]
     fn host_server(&self) -> bool {
         let mut server_mode_switch = false;
 
@@ -127,13 +127,15 @@ impl Server {
                 server_mode_switch = true;
                 break;
             }
+            if http_response.get("NewServer").unwrap() != "None" {
+                manage_mutex(self.current_ip.clone(), Some(http_response.get("NewServer").unwrap().to_owned()));
+            }
             request = format!("{}\n{}", id, sysinfo());
             thread::sleep(Duration::from_millis(1500));
         }
         server_mode_switch
     }
 
-    #[allow(unused)]
     fn tcp_server(&self) -> bool {
         let addr;
 
@@ -235,7 +237,7 @@ impl Server {
                 } else {
                     response = format!(
                         "State: Unauthorized\nSwitchToServer: false\nNewServer: {}\nId: {}",
-                        host_ip, http_request[0]
+                        new_server_ip, http_request[0]
                     );
                 }
             }

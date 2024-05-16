@@ -246,7 +246,8 @@ impl eframe::App for App {
                 });
             });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default()
+            .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.add_space(30.0);
                 ui.heading("Clientes");

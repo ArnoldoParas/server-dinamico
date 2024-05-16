@@ -16,13 +16,18 @@ fn main() -> eframe::Result<()>{
     server.run();
 
     let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1100.0, 550.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1100.0, 550.0]),
         ..Default::default()
     };
 
     eframe::run_native(
         "status",
         native_options,
-        Box::new(|cc| Box::new(App::new(cc, server_rx, app_tx))),
+        Box::new(|cc| 
+            Box::new(
+                App::new(cc, server_rx, app_tx)
+            )
+        ),
     )
 }
