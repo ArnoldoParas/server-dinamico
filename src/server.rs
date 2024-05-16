@@ -175,7 +175,7 @@ impl Server {
         false
     }
 
-    fn pulse(&self) {
+    fn pulse(&mut self) {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         let guard = self.reciver.lock().unwrap();
         
@@ -197,6 +197,8 @@ impl Server {
                     stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
         
                     manage_mutex(self.switch_mode.clone(), Some(false));
+                    let mut guard = self.host_data.lock().unwrap();
+                    guard.clear();
                     break;
                 },
                 Err(_) => (),
