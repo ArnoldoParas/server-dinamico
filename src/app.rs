@@ -7,6 +7,7 @@ pub struct App {
     info: SystemInfo,
     clients: HashMap<String, Vec<String>>,
     ranked_clients: Vec<(String, f32)>,
+    clear_hash: bool,
     receiver: mpsc::Receiver<HashMap<String, Vec<String>>>,
     sender: mpsc::Sender<String>,
 }
@@ -39,12 +40,13 @@ impl App {
             },
             clients: HashMap::new(),
             ranked_clients: Vec::new(),
+            clear_hash: false,
             receiver: rx,
             sender: tx,
         }
     }
 
-    fn render_results(&self, ui: &mut eframe::egui::Ui) {
+    fn render_results(&mut self, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
             ui.add_space(ui.available_width());
         });
@@ -123,6 +125,12 @@ impl App {
                     }
                 });
         }
+        if self.clear_hash == true {
+            self.clients.clear();
+            self.ranked_clients.clear();
+            self.clear_hash = false;
+        }
+
     }
 
     fn rank_clients(&mut self) {
@@ -182,6 +190,7 @@ impl App {
             false => {
                 if self.ranked_clients[0].0 != first_place_key {
                     self.sender.send(self.ranked_clients[0].0.clone()).unwrap();
+                    self.clear_hash = true;
                 }
             }
         }
