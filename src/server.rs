@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap, 
-    fmt::Error, 
     io::{prelude::*, BufReader}, 
     net::{Shutdown, TcpListener, TcpStream}, 
     sync::{mpsc, Arc, Mutex}, 
@@ -172,10 +171,12 @@ impl Server {
                 false => self.handle_conecction(stream, &mut hosts_dir, false),
             }
         }
+        let mut guard = self.host_data.lock().unwrap();
+        guard.clear();
         false
     }
 
-    fn pulse(&mut self) {
+    fn pulse(&self) {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         let guard = self.reciver.lock().unwrap();
         
@@ -197,8 +198,7 @@ impl Server {
                     stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
         
                     manage_mutex(self.switch_mode.clone(), Some(false));
-                    let mut guard = self.host_data.lock().unwrap();
-                    guard.clear();
+
                     break;
                 },
                 Err(_) => (),
