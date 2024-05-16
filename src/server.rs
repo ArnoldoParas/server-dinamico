@@ -128,7 +128,13 @@ impl Server {
                 break;
             }
             if http_response.get("NewServer").unwrap() != "None" {
-                manage_mutex(self.current_ip.clone(), Some(http_response.get("NewServer").unwrap().to_owned()));
+                {
+                    let ip_clone = self.current_ip.clone();
+                    let mut guard = ip_clone.lock().unwrap();
+                    *guard = format!("{}:3012", http_response.get("NewServer").unwrap());
+                }
+                // manage_mutex(self.current_ip.clone(), Some(http_response.get("NewServer").unwrap().to_owned()));
+                // ip = ;
             }
             request = format!("{}\n{}", id, sysinfo());
             thread::sleep(Duration::from_millis(1500));
