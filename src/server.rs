@@ -79,7 +79,7 @@ impl Server {
 
         manage_mutex(self.termination_signal.clone(), Some(false));
 
-        let ip = manage_mutex(self.current_ip.clone(), None).unwrap();
+        let mut ip = manage_mutex(self.current_ip.clone(), None).unwrap();
 
         let mut id = String::from("NoId");
         let mut request = String::from(&id);
@@ -132,9 +132,8 @@ impl Server {
                     let ip_clone = self.current_ip.clone();
                     let mut guard = ip_clone.lock().unwrap();
                     *guard = format!("{}:3012", http_response.get("NewServer").unwrap());
+                    ip = String::from(&*guard);
                 }
-                // manage_mutex(self.current_ip.clone(), Some(http_response.get("NewServer").unwrap().to_owned()));
-                // ip = ;
             }
             request = format!("{}\n{}", id, sysinfo());
             thread::sleep(Duration::from_millis(1500));
