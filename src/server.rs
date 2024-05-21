@@ -16,7 +16,7 @@ struct Server {
     reciver: Mutex<mpsc::Receiver<String>>,
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
-    switch_mode: Arc<Mutex<bool>>,
+    migration_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
     new_server_id: Arc<Mutex<String>>,
 }
@@ -43,7 +43,7 @@ impl ServerWrapper {
                 reciver: Mutex::new(rx),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
-                switch_mode: Arc::new(Mutex::new(false)),
+                migration_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
                 new_server_id: Arc::new(Mutex::new(String::new())),
             }),
@@ -160,7 +160,7 @@ impl Server {
             }
 
             let stream = stream.expect("Fallo en inicial el stream");
-            let guard = self.switch_mode.lock().unwrap();
+            let guard = self.migration_mode.lock().unwrap();
             match *guard {
                 true => {
                     self.handle_conecction(stream, &mut hosts_dir, true);
@@ -186,7 +186,7 @@ impl Server {
             thread::sleep(Duration::from_millis(500));
             match dbg!(guard.try_recv()) {
                 Ok(msg) => {
-                    manage_mutex(self.switch_mode.clone(), Some(true));
+                    manage_mutex(self.migration_mode.clone(), Some(true));
                     manage_mutex(self.new_server_id.clone(), Some(msg));
                     thread::sleep(Duration::from_secs(3));
 
@@ -195,7 +195,7 @@ impl Server {
                     let mut stream = TcpStream::connect(&current_ip).unwrap();
                     stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
         
-                    manage_mutex(self.switch_mode.clone(), Some(false));
+                    manage_mutex(self.migration_mode.clone(), Some(false));
 
                     break;
                 },
