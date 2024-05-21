@@ -65,7 +65,6 @@ impl ServerWrapper {
                         state = server_clone_1.tcp_server()
                     }
                 }
-                thread::sleep(Duration::from_secs(1));
             }
         });
     }
@@ -78,7 +77,7 @@ impl Server {
 
         manage_mutex(self.termination_signal.clone(), Some(false));
 
-        let mut ip = manage_mutex(self.current_ip.clone(), None).unwrap();
+        let mut ip: String = manage_mutex(self.current_ip.clone(), None).unwrap();
 
         let mut id = String::from("NoId");
         let mut request = String::from(&id);
@@ -152,8 +151,7 @@ impl Server {
 
         for stream in listener.incoming() {
             {
-                let signal = self
-                    .termination_signal
+                let signal = self.termination_signal
                     .lock()
                     .expect("Fallo en checar la señal");
                 if *signal {
@@ -203,7 +201,6 @@ impl Server {
                 },
                 Err(_) => (),
             }
-
         }
     }
 
@@ -275,7 +272,6 @@ impl Server {
                         "----------\nhost ip: {}\n----------\n",
                         stream.peer_addr().unwrap()
                     );
-                    // self.sender.send(http_request).unwrap();
                 }
             }
         }
