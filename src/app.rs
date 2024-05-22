@@ -151,10 +151,6 @@ impl App {
             let total_mem = &v[5].to_owned().parse::<f32>().unwrap();
             let current_mem = &v[2].to_owned().parse::<f32>().unwrap();
             let ram_percentage = (current_mem / total_mem * 10000.0).trunc() / 100.0;
-            println!(
-                "cpu pecentaje: {}\nram percentaje: {}\n",
-                &v[1], &ram_percentage
-            );
 
             let cpu_score = match &v[1].parse::<f32>().unwrap() {
                 x if *x >= 0.0 && *x <= 10.0 => 3.0 * 0.6,
@@ -189,9 +185,8 @@ impl App {
         }
         self.ranked_clients
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        println!("{:?}", self.ranked_clients);
 
-        match dbg!(first_place_key.is_empty()) {
+        match first_place_key.is_empty() {
             true => (),
             false => {
                 if self.ranked_clients[0].0 != first_place_key {
@@ -206,8 +201,6 @@ impl App {
         match self.receiver.try_recv() {
             Ok(msg) => {
                 self.clients = msg;
-                println!("----------------------------------------------------");
-                println!("{:?}", self.clients);
                 self.rank_clients()
             }
             Err(_) => (),
