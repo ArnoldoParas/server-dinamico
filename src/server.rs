@@ -5,6 +5,7 @@ use std::{
     sync::{mpsc, Arc, Mutex},
     thread,
     time::Duration,
+    process
 };
 use sysinfo::{CpuRefreshKind, Disks, Networks, RefreshKind, System};
 use uuid::Uuid;
@@ -86,8 +87,9 @@ impl Server {
 
         let mut id = String::from("No-Id");
         let mut request = String::from(&id);
-        let mut last_server_response = String::new();
+        let mut last_server_response: HashMap<String, String> = HashMap::new();
         let mut connection_attempts: u8 = 0;
+        let mut fallback_server_state = false;
         loop {
             let mut stream;
             match TcpStream::connect(&ip) {
@@ -95,18 +97,42 @@ impl Server {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
                     connection_attempts = 0;
+                    fallback_server_state = false;
                     stream = s
                 },
                 Err(_) => {
                     connection_attempts += 1;
                     if connection_attempts <= 2 {
                         thread::sleep(Duration::from_millis(1500));
-                        println!("connection attempts: {}, FAIL", connection_attempts);
+                        eprintln!("connection attempts: {}, FAIL", connection_attempts);
                         continue;
-                    } 
-                    println!("connection attempts: {}, FAIL", connection_attempts);
-                    server_mode_switch = true;
-                    break;
+                    }
+
+                    if last_server_response.is_empty() {
+                        if !fallback_server_state {
+                            eprintln!("connection attempts: {}, FAIL", connection_attempts);
+                            server_mode_switch = true;
+                            break;
+                        }
+                        eprintln!("connection attempts: {}, FAIL", connection_attempts);
+                        eprintln!("No fallback server... aborting");
+                        process::abort()
+                    } else {  
+                        match last_server_response.get("Fallback-Server").unwrap().as_str() {
+                            "None" => {
+                                eprintln!("connection attempts: {}, FAIL", connection_attempts);
+                                eprintln!("No fallback server... aborting");
+                                process::abort()
+                            },
+                            server_ip => {
+                                println!("Fallback server ip: {}", server_ip);
+                                ip = manage_mutex(self.current_ip.clone(), Some(server_ip.to_string())).unwrap();
+                                connection_attempts = 0;
+                                fallback_server_state = true;
+                                continue;
+                            }
+                        } 
+                    }
                 }
             }
             stream
@@ -127,9 +153,11 @@ impl Server {
                     let (k, v) = element.split_once(':').unwrap();
                     temp_hashmap.insert(k.to_owned(), v.trim().to_owned());
                 }
-                println!("{:#?}", temp_hashmap);
+                println!("response: {:#?}", temp_hashmap);
                 temp_hashmap
             };
+
+            last_server_response = http_response.clone();
 
             if http_response.get("State").unwrap() != "OK" {
                 id = http_response.get("Id").unwrap().to_owned();
