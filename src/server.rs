@@ -6,7 +6,13 @@ use std::{
     thread, 
     time::Duration
 };
-use sysinfo::{Disks, Networks, System};
+use sysinfo::{
+    Disks,
+    Networks,
+    System,
+    RefreshKind,
+    CpuRefreshKind
+};
 use uuid::Uuid;
 
 mod tests;
@@ -319,13 +325,29 @@ fn sysinfo() -> String {
         disk_space = disk.available_space() / 1_000_000_000;
         break;
     }
-
     let cpu = sys.cpus().get(0).unwrap();
 
+    
+    let mut s = System::new_with_specifics(
+        RefreshKind::new().with_cpu(CpuRefreshKind::everything()),
+    );
+    
+    // Wait a bit because CPU usage is based on diff.
+    std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
+    // Refresh CPUs again.
+    s.refresh_cpu();
+
+    let mut cpu_avrg = 0.0;
+    let logic_cores = s.cpus().len() as f32;
+    for cpu in s.cpus() {
+        cpu_avrg += cpu.cpu_usage();
+    }
+    cpu_avrg /= logic_cores;
+    
     let sysinfo = format!(
         "{}\n{:.2}\n{}\n{}\n{}\n{}",
         System::host_name().unwrap(),
-        cpu.cpu_usage(),
+        cpu_avrg,
         sys.used_memory() / 1_000_000,
         freebandwith / 1_000_000,
         disk_space,
