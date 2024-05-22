@@ -27,6 +27,24 @@ To-do list
 - [ ] Find a way to diferienciate a **ConnectionRefused** error from being the first server and the one when the server is down. [^1]
 - [ ] Add the re-try feature in case that the server is down. [^2]
 
+### Flow of the feature
+
+Host try to connect to the server.
+
+If server refuse the connection check the last response from the server.
+1. There is a response.
+
+>Try to connect to the server 3 more times.
+>
+> Seek the ip address to the fallback server in the response.
+> 1. If there is no a fallback server end application.
+> 2. If there is then erace the reponse history and try to connect. 
+2. There is not a response.
+
+> Try to connect to the ser ver 3 more times.
+> 
+> Become the server.
+
 
 [^1]: The **ConnectionRefused** errors may be diferenciated by copying the last response from the server.
 In the case that there's no last response it means that you are the first device.
