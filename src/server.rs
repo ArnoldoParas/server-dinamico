@@ -82,7 +82,7 @@ impl Server {
 
         let mut ip: String = manage_mutex(self.current_ip.clone(), None).unwrap();
 
-        let mut id = String::from("NoId");
+        let mut id = String::from("No-Id");
         let mut request = String::from(&id);
         loop {
             let mut stream;
@@ -119,7 +119,7 @@ impl Server {
                 id = http_response.get("Id").unwrap().to_owned();
                 request = format!("{}", id);
             }
-            if http_response.get("SwitchToServer").unwrap() == "true" {
+            if http_response.get("Switch-To-Server").unwrap() == "true" {
                 {
                     let ip_clone = self.current_ip.clone();
                     let mut guard = ip_clone.lock().unwrap();
@@ -128,11 +128,11 @@ impl Server {
                 server_mode_switch = true;
                 break;
             }
-            if http_response.get("NewServer").unwrap() != "None" {
+            if http_response.get("New-Server").unwrap() != "None" {
                 {
                     let ip_clone = self.current_ip.clone();
                     let mut guard = ip_clone.lock().unwrap();
-                    *guard = format!("{}:3012", http_response.get("NewServer").unwrap());
+                    *guard = format!("{}:3012", http_response.get("New-Server").unwrap());
                     ip = String::from(&*guard);
                 }
             }
@@ -225,6 +225,7 @@ impl Server {
 
         let response;
 
+        // If true, the server is in migration mode
         match migration {
             true => {
                 let new_server_ip = hosts_dir
@@ -251,10 +252,10 @@ impl Server {
                 }
             }
             false => {
-                if http_request[0] == "NoId" {
+                if http_request[0] == "No-Id" {
                     let id = String::from(Uuid::new_v4());
                     response = format!(
-                        "State: Unauthorized\nSwitchToServer: false\nNewServer: None\nId: {}",
+                        "State: Unauthorized\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}",
                         id
                     );
                     hosts_dir.insert(id, stream.peer_addr().unwrap().ip().to_string());
@@ -268,13 +269,13 @@ impl Server {
                         guard.insert(k, req);
                     }
                     response = format!(
-                        "State: OK\nSwitchToServer: false\nNewServer: None\nId: {}",
+                        "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}",
                         http_request[0]
                     );
-                    println!(
-                        "----------\nhost ip: {}\n----------\n",
-                        stream.peer_addr().unwrap()
-                    );
+                    // println!(
+                    //     "----------\nhost ip: {}\n----------\n",
+                    //     stream.peer_addr().unwrap()
+                    // );
                 }
             }
         }
