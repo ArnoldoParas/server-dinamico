@@ -1,18 +1,12 @@
 use std::{
-    collections::HashMap, 
-    io::{prelude::*, BufReader}, 
-    net::{Shutdown, TcpListener, TcpStream}, 
-    sync::{mpsc, Arc, Mutex}, 
-    thread, 
-    time::Duration
+    collections::HashMap,
+    io::{prelude::*, BufReader},
+    net::{Shutdown, TcpListener, TcpStream},
+    sync::{mpsc, Arc, Mutex},
+    thread,
+    time::Duration,
 };
-use sysinfo::{
-    Disks,
-    Networks,
-    System,
-    RefreshKind,
-    CpuRefreshKind
-};
+use sysinfo::{CpuRefreshKind, Disks, Networks, RefreshKind, System};
 use uuid::Uuid;
 
 mod tests;
@@ -42,7 +36,10 @@ impl ServerWrapper {
     // /
     // / let server = ServerWrapper::new();
     // / ```
-    pub fn new(tx: mpsc::Sender<HashMap<String, Vec<String>>>, rx: mpsc::Receiver<String>) -> ServerWrapper {
+    pub fn new(
+        tx: mpsc::Sender<HashMap<String, Vec<String>>>,
+        rx: mpsc::Receiver<String>,
+    ) -> ServerWrapper {
         ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
@@ -157,7 +154,8 @@ impl Server {
 
         for stream in listener.incoming() {
             {
-                let signal = self.termination_signal
+                let signal = self
+                    .termination_signal
                     .lock()
                     .expect("Fallo en checar la señal");
                 if *signal {
@@ -183,28 +181,28 @@ impl Server {
     fn pulse(&self) {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         let guard = self.reciver.lock().unwrap();
-        
+
         loop {
             thread::sleep(Duration::from_secs(3));
             self.sender
-            .send(manage_mutex(self.host_data.clone(), None).unwrap())
-            .unwrap();
+                .send(manage_mutex(self.host_data.clone(), None).unwrap())
+                .unwrap();
             thread::sleep(Duration::from_millis(500));
-            match dbg!(guard.try_recv()) {
+            match guard.try_recv() {
                 Ok(msg) => {
                     manage_mutex(self.migration_mode.clone(), Some(true));
                     manage_mutex(self.new_server_id.clone(), Some(msg));
                     thread::sleep(Duration::from_secs(3));
 
                     manage_mutex(self.termination_signal.clone(), Some(true));
-        
+
                     let mut stream = TcpStream::connect(&current_ip).unwrap();
                     stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
-        
+
                     manage_mutex(self.migration_mode.clone(), Some(false));
 
                     break;
-                },
+                }
                 Err(_) => (),
             }
         }
@@ -229,7 +227,8 @@ impl Server {
 
         match migration {
             true => {
-                let new_server_ip = hosts_dir.get(&manage_mutex(self.new_server_id.clone(), None).unwrap())
+                let new_server_ip = hosts_dir
+                    .get(&manage_mutex(self.new_server_id.clone(), None).unwrap())
                     .unwrap()
                     .to_owned();
 
@@ -265,9 +264,7 @@ impl Server {
                         let k = req[0].clone();
                         req.remove(0);
                         req.push("connected".to_string());
-                        let mut guard = self.host_data
-                            .lock()
-                            .unwrap();
+                        let mut guard = self.host_data.lock().unwrap();
                         guard.insert(k, req);
                     }
                     response = format!(
@@ -327,11 +324,10 @@ fn sysinfo() -> String {
     }
     let cpu = sys.cpus().get(0).unwrap();
 
-    
     let mut s = System::new_with_specifics(
-        RefreshKind::new().with_cpu(CpuRefreshKind::everything()),
+        RefreshKind::new().with_cpu(CpuRefreshKind::everything())
     );
-    
+
     // Wait a bit because CPU usage is based on diff.
     std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
     // Refresh CPUs again.
@@ -343,9 +339,10 @@ fn sysinfo() -> String {
         cpu_avrg += cpu.cpu_usage();
     }
     cpu_avrg /= logic_cores;
-    
+    cpu_avrg.trunc();
+
     let sysinfo = format!(
-        "{}\n{:.2}\n{}\n{}\n{}\n{}",
+        "{}\n{:.0}\n{}\n{}\n{}\n{}",
         System::host_name().unwrap(),
         cpu_avrg,
         sys.used_memory() / 1_000_000,

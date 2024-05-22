@@ -1,5 +1,8 @@
 use egui::{RichText, ScrollArea};
-use std::{collections::HashMap, sync::mpsc::{self, Sender}};
+use std::{
+    collections::HashMap,
+    sync::mpsc::{self, Sender},
+};
 use sysinfo::System;
 
 // #[derive(Default)]
@@ -23,7 +26,11 @@ struct SystemInfo {
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>, rx: mpsc::Receiver<HashMap<String, Vec<String>>>, tx: Sender<String>) -> Self {
+    pub fn new(
+        _cc: &eframe::CreationContext<'_>,
+        rx: mpsc::Receiver<HashMap<String, Vec<String>>>,
+        tx: Sender<String>,
+    ) -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
         let cpu = sys.cpus().get(0).unwrap();
@@ -130,7 +137,6 @@ impl App {
             self.ranked_clients.clear();
             self.clear_hash = false;
         }
-
     }
 
     fn rank_clients(&mut self) {
@@ -255,8 +261,7 @@ impl eframe::App for App {
                 });
             });
 
-        egui::CentralPanel::default()
-            .show(ctx, |ui| {
+        egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.add_space(30.0);
                 ui.heading("Clientes");
