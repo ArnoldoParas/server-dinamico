@@ -14,6 +14,7 @@ mod tests;
 struct Server {
     sender: mpsc::Sender<HashMap<String, Vec<String>>>,
     reciver: Mutex<mpsc::Receiver<String>>,
+    _id: String,
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
     migration_mode: Arc<Mutex<bool>>,
@@ -44,6 +45,7 @@ impl ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
                 reciver: Mutex::new(rx),
+                _id: String::new(),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
