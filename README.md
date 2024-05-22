@@ -23,7 +23,7 @@ To do list
 
 To-do list
 
-- [ ] add a ID argument in the server struct.
+- [x] add a ID argument in the server struct.
 - [ ] Find a way to diferienciate a **ConnectionRefused** error from being the first server and the one when the server is down. [^1]
 - [ ] Add the re-try feature in case that the server is down. [^2]
 
