@@ -117,13 +117,13 @@ impl Server {
 
             if http_response.get("State").unwrap() != "OK" {
                 id = http_response.get("Id").unwrap().to_owned();
-                request = format!("{}", id);
+                request = id.to_string();
             }
             if http_response.get("Switch-To-Server").unwrap() == "true" {
                 {
                     let ip_clone = self.current_ip.clone();
                     let mut guard = ip_clone.lock().unwrap();
-                    *guard = format!("{}:3012", stream.local_addr().unwrap().ip().to_string());
+                    *guard = format!("{}:3012", stream.local_addr().unwrap().ip());
                 }
                 server_mode_switch = true;
                 break;
@@ -143,9 +143,7 @@ impl Server {
     }
 
     fn tcp_server(&self) -> bool {
-        let addr;
-
-        addr = manage_mutex(self.current_ip.clone(), None).unwrap();
+        let addr = manage_mutex(self.current_ip.clone(), None).unwrap();
 
         let mut hosts_dir: HashMap<String, String> = HashMap::new();
 
@@ -188,22 +186,19 @@ impl Server {
                 .send(manage_mutex(self.host_data.clone(), None).unwrap())
                 .unwrap();
             thread::sleep(Duration::from_millis(500));
-            match guard.try_recv() {
-                Ok(msg) => {
-                    manage_mutex(self.migration_mode.clone(), Some(true));
-                    manage_mutex(self.new_server_id.clone(), Some(msg));
-                    thread::sleep(Duration::from_secs(3));
+            if let Ok(msg) = guard.try_recv() {
+                manage_mutex(self.migration_mode.clone(), Some(true));
+                manage_mutex(self.new_server_id.clone(), Some(msg));
+                thread::sleep(Duration::from_secs(3));
 
-                    manage_mutex(self.termination_signal.clone(), Some(true));
+                manage_mutex(self.termination_signal.clone(), Some(true));
 
-                    let mut stream = TcpStream::connect(&current_ip).unwrap();
-                    stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
+                let mut stream = TcpStream::connect(current_ip).unwrap(); // & in current ip
+                stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
 
-                    manage_mutex(self.migration_mode.clone(), Some(false));
+                manage_mutex(self.migration_mode.clone(), Some(false));
 
-                    break;
-                }
-                Err(_) => (),
+                break;
             }
         }
     }
@@ -272,10 +267,6 @@ impl Server {
                         "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}",
                         http_request[0]
                     );
-                    // println!(
-                    //     "----------\nhost ip: {}\n----------\n",
-                    //     stream.peer_addr().unwrap()
-                    // );
                 }
             }
         }
@@ -294,7 +285,7 @@ where
         Some(data) => {
             let d = data.clone();
             *guard = d;
-            return Some(data);
+            Some(data)
         }
         None => Some(x),
     }
@@ -319,11 +310,9 @@ fn sysinfo() -> String {
     }
 
     let disks = Disks::new_with_refreshed_list();
-    for disk in disks.list() {
+    if let Some(disk) = disks.list().iter().next(){
         disk_space = disk.available_space() / 1_000_000_000;
-        break;
     }
-    let cpu = sys.cpus().get(0).unwrap();
 
     let mut s = System::new_with_specifics(
         RefreshKind::new().with_cpu(CpuRefreshKind::everything())

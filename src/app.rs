@@ -33,17 +33,17 @@ impl App {
     ) -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
-        let cpu = sys.cpus().get(0).unwrap();
+        let cpu = sys.cpus().first().unwrap();
 
         App {
             info: SystemInfo {
                 client_name: System::host_name().unwrap(),
                 cpu_model: cpu.brand().into(),
-                cpu_freq: format!("{}", cpu.frequency()),
+                cpu_freq: cpu.frequency().to_string(),
                 physical_cores: format!("{}", sys.physical_core_count().unwrap()),
                 total_memory: format!("{} bytes", sys.total_memory()),
-                os: format!("{}", System::long_os_version().unwrap()),
-                os_version: format!("{}", System::kernel_version().unwrap()),
+                os: System::long_os_version().unwrap().to_string(),
+                os_version: System::kernel_version().unwrap().to_string(),
             },
             clients: HashMap::new(),
             ranked_clients: Vec::new(),
@@ -57,7 +57,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.add_space(ui.available_width());
         });
-        if self.clients.len() != 0 {
+        if !self.clients.is_empty() {
             egui::Grid::new("test")
                 .min_col_width(100.0)
                 .striped(true)
@@ -132,7 +132,7 @@ impl App {
                     }
                 });
         }
-        if self.clear_hash == true {
+        if self.clear_hash {
             self.clients.clear();
             self.ranked_clients.clear();
             self.clear_hash = false;
@@ -153,32 +153,59 @@ impl App {
             let ram_percentage = (current_mem / total_mem * 10000.0).trunc() / 100.0;
 
             let cpu_score = match &v[1].parse::<f32>().unwrap() {
-                x if *x >= 0.0 && *x <= 10.0 => 3.0 * 0.6,
-                x if *x > 10.0 && *x <= 20.0 => 5.0 * 0.6,
-                x if *x > 20.0 && *x <= 30.0 => 6.0 * 0.6,
-                x if *x > 30.0 && *x <= 40.0 => 7.0 * 0.6,
-                x if *x > 40.0 && *x <= 50.0 => 8.0 * 0.6,
-                x if *x > 50.0 && *x <= 60.0 => 9.0 * 0.6,
-                x if *x > 60.0 && *x <= 70.0 => 10.0 * 0.6,
-                x if *x > 70.0 && *x <= 80.0 => 9.0 * 0.6,
-                x if *x > 80.0 && *x <= 90.0 => 8.0 * 0.6,
-                x if *x > 90.0 && *x <= 100.0 => 6.0 * 0.6,
+                x if (0.0..=10.0).contains(x) => 3.0 * 0.6,
+                x if (11.0..=20.0).contains(x) => 5.0 * 0.6,
+                x if (21.0..=30.0).contains(x) => 6.0 * 0.6,
+                x if (31.0..=40.0).contains(x) => 7.0 * 0.6,
+                x if (41.0..=50.0).contains(x) => 8.0 * 0.6,
+                x if (51.0..=60.0).contains(x) => 9.0 * 0.6,
+                x if (61.0..=70.0).contains(x) => 10.0 * 0.6,
+                x if (71.0..=80.0).contains(x) => 9.0 * 0.6,
+                x if (81.0..=90.0).contains(x) => 8.0 * 0.6,
+                x if (91.0..=100.0).contains(x) => 6.0 * 0.6,
                 _ => 0.0,
             };
+            // let cpu_score = match &v[1].parse::<f32>().unwrap() {
+            //     x if *x >= 0.0 && *x <= 10.0 => 3.0 * 0.6,
+            //     x if *x > 10.0 && *x <= 20.0 => 5.0 * 0.6,
+            //     x if *x > 20.0 && *x <= 30.0 => 6.0 * 0.6,
+            //     x if *x > 30.0 && *x <= 40.0 => 7.0 * 0.6,
+            //     x if *x > 40.0 && *x <= 50.0 => 8.0 * 0.6,
+            //     x if *x > 50.0 && *x <= 60.0 => 9.0 * 0.6,
+            //     x if *x > 60.0 && *x <= 70.0 => 10.0 * 0.6,
+            //     x if *x > 70.0 && *x <= 80.0 => 9.0 * 0.6,
+            //     x if *x > 80.0 && *x <= 90.0 => 8.0 * 0.6,
+            //     x if *x > 90.0 && *x <= 100.0 => 6.0 * 0.6,
+            //     _ => 0.0,
+            // };
 
             let ram_score = match ram_percentage {
-                x if x >= 0.0 && x <= 10.0 => 6.0 * 0.4,
-                x if x > 10.0 && x <= 20.0 => 7.0 * 0.4,
-                x if x > 20.0 && x <= 30.0 => 8.0 * 0.4,
-                x if x > 30.0 && x <= 40.0 => 9.0 * 0.4,
-                x if x > 40.0 && x <= 50.0 => 10.0 * 0.4,
-                x if x > 50.0 && x <= 60.0 => 9.0 * 0.4,
-                x if x > 60.0 && x <= 70.0 => 8.0 * 0.4,
-                x if x > 70.0 && x <= 80.0 => 6.0 * 0.4,
-                x if x > 80.0 && x <= 90.0 => 4.0 * 0.4,
-                x if x > 90.0 && x <= 100.0 => 2.0 * 0.4,
+                x if (0.0..=10.0).contains(&x) => 6.0 * 0.4,
+                x if (11.0..=20.0).contains(&x) => 7.0 * 0.4,
+                x if (21.0..=30.0).contains(&x) => 8.0 * 0.4,
+                x if (31.0..=40.0).contains(&x) => 9.0 * 0.4,
+                x if (41.0..=50.0).contains(&x) => 10.0 * 0.4,
+                x if (51.0..=60.0).contains(&x) => 9.0 * 0.4,
+                x if (61.0..=70.0).contains(&x) => 8.0 * 0.4,
+                x if (71.0..=80.0).contains(&x) => 6.0 * 0.4,
+                x if (81.0..=90.0).contains(&x) => 4.0 * 0.4,
+                x if (91.0..=100.0).contains(&x) => 2.0 * 0.4,
                 _ => 0.0,
             };
+            // let ram_score = match ram_percentage {
+            //     x if (0.0..=10.0).contains(&x) => (),
+            //     x if x >= 0.0 && x <= 10.0 => 6.0 * 0.4,
+            //     x if x > 10.0 && x <= 20.0 => 7.0 * 0.4,
+            //     x if x > 20.0 && x <= 30.0 => 8.0 * 0.4,
+            //     x if x > 30.0 && x <= 40.0 => 9.0 * 0.4,
+            //     x if x > 40.0 && x <= 50.0 => 10.0 * 0.4,
+            //     x if x > 50.0 && x <= 60.0 => 9.0 * 0.4,
+            //     x if x > 60.0 && x <= 70.0 => 8.0 * 0.4,
+            //     x if x > 70.0 && x <= 80.0 => 6.0 * 0.4,
+            //     x if x > 80.0 && x <= 90.0 => 4.0 * 0.4,
+            //     x if x > 90.0 && x <= 100.0 => 2.0 * 0.4,
+            //     _ => 0.0,
+            // };
             let score = cpu_score + ram_score;
 
             self.ranked_clients.push((k.to_owned(), score));
@@ -198,13 +225,10 @@ impl App {
     }
 
     fn handle_tcp_data(&mut self) {
-        match self.receiver.try_recv() {
-            Ok(msg) => {
-                self.clients = msg;
-                self.rank_clients()
-            }
-            Err(_) => (),
-        };
+        if let Ok(msg) = self.receiver.try_recv() {
+            self.clients = msg;
+            self.rank_clients()
+        }
     }
 }
 
