@@ -86,11 +86,25 @@ impl Server {
 
         let mut id = String::from("No-Id");
         let mut request = String::from(&id);
+        let mut last_server_response = String::new();
+        let mut connection_attempts: u8 = 0;
         loop {
             let mut stream;
             match TcpStream::connect(&ip) {
-                Ok(s) => stream = s,
+                Ok(s) => {
+                    connection_attempts += 1;
+                    println!("connection attempts: {}, SUCCESS", connection_attempts);
+                    connection_attempts = 0;
+                    stream = s
+                },
                 Err(_) => {
+                    connection_attempts += 1;
+                    if connection_attempts <= 2 {
+                        thread::sleep(Duration::from_millis(1500));
+                        println!("connection attempts: {}, FAIL", connection_attempts);
+                        continue;
+                    } 
+                    println!("connection attempts: {}, FAIL", connection_attempts);
                     server_mode_switch = true;
                     break;
                 }

@@ -25,7 +25,7 @@ To-do list
 
 - [x] add a ID argument in the server struct.
 - [ ] Find a way to diferienciate a **ConnectionRefused** error from being the first server and the one when the server is down. [^1]
-- [ ] Add the re-try feature in case that the server is down. [^2]
+- [x] Add the re-try feature in case that the server is down. [^2]
 
 ### Flow of the feature
 
