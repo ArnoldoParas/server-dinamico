@@ -188,7 +188,7 @@ impl App {
         match first_place_key.is_empty() {
             true => (),
             false => {
-                if dbg!(self.ranked_clients[0].0 != first_place_key) { // hay un cambio lo que significa que minimo hay 2
+                if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2
                     let msg = format!("First\n{}", self.ranked_clients[0].0.clone());
                     self.sender.send(msg).unwrap();
                     self.clear_hash = true;
@@ -198,6 +198,9 @@ impl App {
 
         if self.ranked_clients.len() >= 2 {
             let msg = format!("Second\n{}", self.ranked_clients[1].0.clone());
+            self.sender.send(msg).unwrap();
+        } else {
+            let msg = format!("Second\nNone");
             self.sender.send(msg).unwrap();
         }
 
