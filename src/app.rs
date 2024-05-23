@@ -195,7 +195,7 @@ impl App {
                     self.clear_hash = true;
                 } else {
                     let msg = self.ranked_clients[1].0.clone();
-                    self.sender.send(msg).unwrap();
+                    dbg!(self.sender.send(msg).unwrap());
                 }
             }
         }

@@ -96,7 +96,7 @@ impl Server {
         let mut fallback_server_state = false;
         loop {
             let mut stream;
-            match dbg!(TcpStream::connect(&ip)) {
+            match TcpStream::connect(&ip) {
                 Ok(s) => {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
