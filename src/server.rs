@@ -16,6 +16,7 @@ struct Server {
     sender: mpsc::Sender<HashMap<String, Vec<String>>>,
     reciver: Mutex<mpsc::Receiver<String>>,
     _id: String,
+    server_ip: String,
     current_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
     migration_mode: Arc<Mutex<bool>>,
@@ -47,6 +48,7 @@ impl ServerWrapper {
                 sender: tx,
                 reciver: Mutex::new(rx),
                 _id: String::new(),
+                server_ip: String::new(),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
@@ -78,7 +80,7 @@ impl ServerWrapper {
 
 #[allow(unused)]
 impl Server {
-    fn host_server(&self) -> bool {
+    fn host_server(&mut self) -> bool {
         let mut server_mode_switch = false;
 
         manage_mutex(self.termination_signal.clone(), Some(false));
@@ -159,8 +161,13 @@ impl Server {
 
             last_server_response = http_response.clone();
 
+            if self.server_ip.is_empty() {
+                ip = http_response.get("Ip").unwrap().to_owned();
+                self.server_ip = ip.to_owned();
+            }
+
             if http_response.get("State").unwrap() != "OK" {
-                id = http_response.get("Id").unwrap().to_owned();
+                dbg!(id = http_response.get("Id").unwrap().to_owned());
                 request = id.to_string();
             }
             if http_response.get("Switch-To-Server").unwrap() == "true" {
@@ -308,8 +315,9 @@ impl Server {
                         guard.insert(k, req);
                     }
                     response = format!(
-                        "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}",
-                        http_request[0]
+                        "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}\nIp: {}",
+                        http_request[0],
+                        stream.peer_addr().unwrap().ip().to_string()
                     );
                 }
             }
