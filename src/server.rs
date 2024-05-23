@@ -1,11 +1,5 @@
 use std::{
-    collections::HashMap,
-    io::{prelude::*, BufReader},
-    net::{Shutdown, TcpListener, TcpStream},
-    sync::{mpsc, Arc, Mutex},
-    thread,
-    time::Duration,
-    process
+    collections::HashMap, io::{prelude::*, BufReader}, net::{Shutdown, TcpListener, TcpStream}, process, sync::{mpsc, Arc, Mutex}, thread::{self, sleep}, time::Duration
 };
 use sysinfo::{CpuRefreshKind, Disks, Networks, RefreshKind, System};
 use uuid::Uuid;
@@ -249,30 +243,36 @@ impl Server {
                 .unwrap();
             thread::sleep(Duration::from_millis(500));
 
-            if let Ok(msg) = guard.try_recv() {
-                let msg: Vec<_> = msg
-                .lines()
-                .map(|result| result.to_string())
-                .take_while(|line| !line.is_empty())
-                .collect();
-
-                if msg.len() == 2 {
-                    manage_mutex(self.new_server_id.clone(), Some(msg[0].to_owned()));
-                    manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
-                    manage_mutex(self.migration_mode.clone(), Some(true));
-                    thread::sleep(Duration::from_secs(3));
+            for _ in 0..2 {
+                if let Ok(msg) = guard.try_recv() {
+                    let msg: Vec<_> = msg
+                    .lines()
+                    .map(|result| result.to_string())
+                    .take_while(|line| !line.is_empty())
+                    .collect();
     
-                    manage_mutex(self.termination_signal.clone(), Some(true));
-    
-                    let mut stream = TcpStream::connect(current_ip).unwrap(); // & in current ip
-                    stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
-    
-                    manage_mutex(self.migration_mode.clone(), Some(false));
-    
-                    break;
-                } else {
-                    manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
+                    match msg[0].as_str() {
+                        "First" => {
+                            manage_mutex(self.new_server_id.clone(), Some(msg[1].to_owned()));
+                            manage_mutex(self.migration_mode.clone(), Some(true));
+                            thread::sleep(Duration::from_secs(3));
+            
+                            manage_mutex(self.termination_signal.clone(), Some(true));
+            
+                            let mut stream = TcpStream::connect(&current_ip).unwrap(); // & in current ip
+                            stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
+            
+                            manage_mutex(self.migration_mode.clone(), Some(false));
+            
+                            break;
+                        },
+                        "Second" => {
+                            manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
+                        },
+                        _ => ()
+                    }
                 }
+                thread::sleep(Duration::from_millis(500));
             }
         }
     }

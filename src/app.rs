@@ -189,21 +189,18 @@ impl App {
             true => (),
             false => {
                 if dbg!(self.ranked_clients[0].0 != first_place_key) { // hay un cambio lo que significa que minimo hay 2
-                    let msg = format!("{}\n{}", self.ranked_clients[0].0.clone(), self.ranked_clients[1].0.clone());
+                    let msg = format!("First\n{}", self.ranked_clients[0].0.clone());
                     self.sender.send(msg).unwrap();
                     self.clear_hash = true;
-                } else {
-                    if dbg!(self.ranked_clients.len() < 2) {// solo hay 1
-                        let msg = format!("{}\nNone", self.ranked_clients[0].0.clone());
-                        dbg!(self.sender.send(msg).unwrap());
-                    } else {
-                        let msg = dbg!(format!("{}\n{}", self.ranked_clients[0].0.clone(), self.ranked_clients[1].0.clone()));
-                        dbg!(self.sender.send(msg).unwrap());
-                    }
-
-                }
+                } 
             }
         }
+
+        if self.ranked_clients.len() >= 2 {
+            let msg = format!("Second\n{}", self.ranked_clients[1].0.clone());
+            self.sender.send(msg).unwrap();
+        }
+
     }
 
     fn handle_tcp_data(&mut self) {
