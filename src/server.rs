@@ -94,7 +94,7 @@ impl Server {
         let mut fallback_server_state = false;
         loop {
             let mut stream;
-            match TcpStream::connect(&ip) {
+            match dbg!(TcpStream::connect(&ip)) {
                 Ok(s) => {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
@@ -105,7 +105,7 @@ impl Server {
                 Err(_) => {
                     connection_attempts += 1;
                     if connection_attempts <= 2 {
-                        thread::sleep(Duration::from_millis(1500));
+                        thread::sleep(Duration::from_millis(500));
                         eprintln!("connection attempts: {}, FAIL", connection_attempts);
                         continue;
                     }
@@ -119,7 +119,7 @@ impl Server {
                         eprintln!("connection attempts: {}, FAIL", connection_attempts);
                         eprintln!("No fallback server... aborting");
                         process::abort()
-                    } else {  
+                    } else { 
                         match last_server_response.get("Fallback-Server").unwrap().as_str() {
                             "None" => {
                                 eprintln!("connection attempts: {}, FAIL", connection_attempts);
@@ -128,6 +128,13 @@ impl Server {
                             },
                             server_ip => {
                                 println!("Fallback server ip: {}", server_ip);
+                                if *self.server_ip.lock().unwrap() == server_ip {
+                                    println!("Switching to server...");
+                                    let mut guard = self.current_ip.lock().unwrap();
+                                    *guard = format!("{}:3012", server_ip);
+                                    server_mode_switch = true;
+                                    break;
+                                }
                                 ip = manage_mutex(self.current_ip.clone(), Some(server_ip.to_string())).unwrap();
                                 connection_attempts = 0;
                                 fallback_server_state = true;
@@ -164,8 +171,7 @@ impl Server {
             {
                 let mut guard = self.server_ip.lock().unwrap();
                 if guard.is_empty() {
-                    ip = http_response.get("Ip").unwrap().to_owned();
-                    *guard = ip.to_owned();
+                    *guard = http_response.get("Ip").unwrap().to_owned();
                 }
             }
 
@@ -304,8 +310,9 @@ impl Server {
                 if http_request[0] == "No-Id" {
                     let id = String::from(Uuid::new_v4());
                     response = format!(
-                        "State: Unauthorized\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}",
-                        id
+                        "State: Unauthorized\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}\nIp: {}",
+                        id,
+                        stream.peer_addr().unwrap().ip().to_string()
                     );
                     hosts_dir.insert(id, stream.peer_addr().unwrap().ip().to_string());
                 } else {
