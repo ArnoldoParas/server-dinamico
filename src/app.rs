@@ -1,7 +1,6 @@
 use egui::{RichText, ScrollArea};
 use std::{
-    collections::HashMap,
-    sync::mpsc::{self, Sender},
+    collections::HashMap, fmt::format, sync::mpsc::{self, Sender}
 };
 use sysinfo::System;
 
@@ -194,8 +193,14 @@ impl App {
                     self.sender.send(msg).unwrap();
                     self.clear_hash = true;
                 } else {
-                    let msg = self.ranked_clients[1].0.clone();
+                    if self.ranked_clients.len() < 1 {
+                    let msg = format!("{}\nNone", self.ranked_clients[0].0.clone());
                     dbg!(self.sender.send(msg).unwrap());
+                } else {
+                    let msg = format!("{}\nN{}", self.ranked_clients[0].0.clone(),self.ranked_clients[1].0.clone());
+                        dbg!(self.sender.send(msg).unwrap());
+                    }
+
                 }
             }
         }
