@@ -189,7 +189,7 @@ impl App {
         match first_place_key.is_empty() {
             true => (),
             false => {
-                if self.ranked_clients[0].0 != first_place_key {
+                if dbg!(self.ranked_clients[0].0 != first_place_key) {
                     let msg = format!("{}\n{}", self.ranked_clients[0].0.clone(), self.ranked_clients[1].0.clone());
                     self.sender.send(msg).unwrap();
                     self.clear_hash = true;
