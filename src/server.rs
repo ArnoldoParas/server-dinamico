@@ -269,11 +269,14 @@ impl Server {
                             break;
                         },
                         "Second" => {
-                            let guard = self.host_dir.lock().unwrap();
-                            let fallback_ip = guard
-                                .get(&msg[1])
-                                .unwrap()
-                                .to_owned();
+                            let fallback_ip;
+                            {
+                                let guard = self.host_dir.lock().unwrap();
+                                fallback_ip = guard
+                                    .get(&msg[1])
+                                    .unwrap()
+                                    .to_owned();
+                            }
 
                             manage_mutex(self.fallback_ip.clone(), Some(fallback_ip));
                         },
@@ -340,8 +343,10 @@ impl Server {
                         stream.peer_addr().unwrap().ip().to_string()
                     );
                     hosts_dir.insert(id, stream.peer_addr().unwrap().ip().to_string());
-                    let mut guard = self.host_dir.lock().unwrap();
-                    *guard = hosts_dir.clone();
+                    {
+                        let mut guard = self.host_dir.lock().unwrap();
+                        *guard = hosts_dir.clone();
+                    }
                 } else {
                     {
                         let mut req = http_request.clone();
