@@ -193,7 +193,7 @@ impl App {
                     self.sender.send(msg).unwrap();
                     self.clear_hash = true;
                 } else {
-                    if dbg!(self.ranked_clients.len() < 1) {// solo hay 1
+                    if dbg!(self.ranked_clients.len() < 2) {// solo hay 1
                         let msg = format!("{}\nNone", self.ranked_clients[0].0.clone());
                         dbg!(self.sender.send(msg).unwrap());
                     } else {
