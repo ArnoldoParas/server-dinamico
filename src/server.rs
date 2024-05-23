@@ -16,6 +16,7 @@ struct Server {
     termination_signal: Arc<Mutex<bool>>,
     migration_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
+    host_dir: Arc<Mutex<HashMap<String, String>>>,
     new_server_id: Arc<Mutex<String>>,
 }
 
@@ -49,6 +50,7 @@ impl ServerWrapper {
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
+                host_dir: Arc::new(Mutex::new(HashMap::new())),
                 new_server_id: Arc::new(Mutex::new(String::new())),
             }),
         }
@@ -267,7 +269,13 @@ impl Server {
                             break;
                         },
                         "Second" => {
-                            manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
+                            let guard = self.host_dir.lock().unwrap();
+                            let fallback_ip = guard
+                                .get(&msg[1])
+                                .unwrap()
+                                .to_owned();
+
+                            manage_mutex(self.fallback_ip.clone(), Some(fallback_ip));
                         },
                         _ => ()
                     }
@@ -332,6 +340,8 @@ impl Server {
                         stream.peer_addr().unwrap().ip().to_string()
                     );
                     hosts_dir.insert(id, stream.peer_addr().unwrap().ip().to_string());
+                    let mut guard = self.host_dir.lock().unwrap();
+                    *guard = hosts_dir.clone();
                 } else {
                     {
                         let mut req = http_request.clone();
