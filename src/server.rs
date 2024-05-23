@@ -102,7 +102,7 @@ impl Server {
                 },
                 Err(_) => {
                     connection_attempts += 1;
-                    if connection_attempts <= 2 {
+                    if connection_attempts <= 7 {
                         thread::sleep(Duration::from_millis(500));
                         eprintln!("connection attempts: {}, FAIL", connection_attempts);
                         continue;
