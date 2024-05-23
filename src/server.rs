@@ -269,16 +269,20 @@ impl Server {
                             break;
                         },
                         "Second" => {
-                            let fallback_ip;
-                            {
-                                let guard = self.host_dir.lock().unwrap();
-                                fallback_ip = guard
-                                    .get(&msg[1])
-                                    .unwrap()
-                                    .to_owned();
+                            if msg[1] == "None" {
+                                manage_mutex(self.fallback_ip.clone(), Some("None".to_string()));
+                            } else {
+                                let fallback_ip;
+                                {
+                                    let guard = self.host_dir.lock().unwrap();
+                                    fallback_ip = guard
+                                        .get(&msg[1])
+                                        .unwrap()
+                                        .to_owned();
+                                }
+    
+                                manage_mutex(self.fallback_ip.clone(), Some(fallback_ip));
                             }
-
-                            manage_mutex(self.fallback_ip.clone(), Some(fallback_ip));
                         },
                         _ => ()
                     }
