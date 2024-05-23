@@ -190,8 +190,12 @@ impl App {
             true => (),
             false => {
                 if self.ranked_clients[0].0 != first_place_key {
-                    self.sender.send(self.ranked_clients[0].0.clone()).unwrap();
+                    let msg = format!("{}\n{}", self.ranked_clients[0].0.clone(), self.ranked_clients[1].0.clone());
+                    self.sender.send(msg).unwrap();
                     self.clear_hash = true;
+                } else {
+                    let msg = self.ranked_clients[1].0.clone();
+                    self.sender.send(msg).unwrap();
                 }
             }
         }

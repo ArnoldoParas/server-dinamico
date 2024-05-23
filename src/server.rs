@@ -18,6 +18,7 @@ struct Server {
     _id: String,
     server_ip: Arc<Mutex<String>>,
     current_ip: Arc<Mutex<String>>,
+    fallback_ip: Arc<Mutex<String>>,
     termination_signal: Arc<Mutex<bool>>,
     migration_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
@@ -50,6 +51,7 @@ impl ServerWrapper {
                 _id: String::new(),
                 server_ip: Arc::new(Mutex::new(String::new())),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
+                fallback_ip: Arc::new(Mutex::new(String::new())),
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
@@ -246,19 +248,31 @@ impl Server {
                 .send(manage_mutex(self.host_data.clone(), None).unwrap())
                 .unwrap();
             thread::sleep(Duration::from_millis(500));
+
             if let Ok(msg) = guard.try_recv() {
-                manage_mutex(self.migration_mode.clone(), Some(true));
-                manage_mutex(self.new_server_id.clone(), Some(msg));
-                thread::sleep(Duration::from_secs(3));
+                let msg: Vec<_> = msg
+                .lines()
+                .map(|result| result.to_string())
+                .take_while(|line| !line.is_empty())
+                .collect();
 
-                manage_mutex(self.termination_signal.clone(), Some(true));
-
-                let mut stream = TcpStream::connect(current_ip).unwrap(); // & in current ip
-                stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
-
-                manage_mutex(self.migration_mode.clone(), Some(false));
-
-                break;
+                if msg.len() == 2 {
+                    manage_mutex(self.new_server_id.clone(), Some(msg[0].to_owned()));
+                    manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
+                    manage_mutex(self.migration_mode.clone(), Some(true));
+                    thread::sleep(Duration::from_secs(3));
+    
+                    manage_mutex(self.termination_signal.clone(), Some(true));
+    
+                    let mut stream = TcpStream::connect(current_ip).unwrap(); // & in current ip
+                    stream.write_all("OK\nNone\n".as_bytes()).unwrap(); // probably change request
+    
+                    manage_mutex(self.migration_mode.clone(), Some(false));
+    
+                    break;
+                } else {
+                    manage_mutex(self.fallback_ip.clone(), Some(msg[1].to_owned()));
+                }
             }
         }
     }
@@ -293,16 +307,19 @@ impl Server {
                 if host_ip == new_server_ip {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!(
-                        "State: OK\nSwitchToServer: true\nNewServer: None\nId: {}",
+                        "State: OK\nSwitchToServer: true\nNewServer: None\nFallback-Server: None\nId: {}",
                         http_request[0]
                     );
 
                     let mut guard = self.current_ip.lock().unwrap();
                     *guard = format!("{}:3012", new_ip);
                 } else {
+                    let fallback_server_ip = manage_mutex(self.fallback_ip.clone(), None).unwrap();
                     response = format!(
-                        "State: Unauthorized\nSwitchToServer: false\nNewServer: {}\nId: {}",
-                        new_server_ip, http_request[0]
+                        "State: Unauthorized\nSwitchToServer: false\nNewServer: {}\nFallback-Server: {}\nId: {}",
+                        new_server_ip,
+                        fallback_server_ip,
+                        http_request[0]
                     );
                 }
             }
@@ -324,10 +341,11 @@ impl Server {
                         let mut guard = self.host_data.lock().unwrap();
                         guard.insert(k, req);
                     }
+                    let fallback_server_ip = manage_mutex(self.fallback_ip.clone(), None).unwrap();
                     response = format!(
-                        "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: None\nId: {}\nIp: {}",
+                        "State: OK\nSwitch-To-Server: false\nNew-Server: None\nFallback-Server: {}\nId: {}",
+                        fallback_server_ip,
                         http_request[0],
-                        stream.peer_addr().unwrap().ip().to_string()
                     );
                 }
             }
