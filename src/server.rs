@@ -1,7 +1,13 @@
 use std::{
-    collections::HashMap, io::{prelude::*, BufReader}, net::{Shutdown, TcpListener, TcpStream}, process, sync::{mpsc, Arc, Mutex}, thread::{self, sleep}, time::Duration
+    collections::HashMap,
+    io::{prelude::*, BufReader},
+    net::{Shutdown, TcpListener, TcpStream},
+    sync::{mpsc, Arc, Mutex}, 
+    thread,
+    time::Duration,
+    process, 
 };
-use sysinfo::{CpuRefreshKind, Disks, Networks, RefreshKind, System};
+use crate::sysinfo;
 use uuid::Uuid;
 
 mod tests;
@@ -92,7 +98,7 @@ impl Server {
         let mut fallback_server_state = false;
         loop {
             let mut stream;
-            match TcpStream::connect(&ip) {
+            match dbg!(TcpStream::connect(&ip)) {
                 Ok(s) => {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
@@ -102,7 +108,7 @@ impl Server {
                 },
                 Err(_) => {
                     connection_attempts += 1;
-                    if connection_attempts <= 7 {
+                    if connection_attempts <= 1 {
                         thread::sleep(Duration::from_millis(500));
                         eprintln!("connection attempts: {}, FAIL", connection_attempts);
                         continue;
@@ -194,7 +200,7 @@ impl Server {
                     ip = String::from(&*guard);
                 }
             }
-            request = format!("{}\n{}", id, sysinfo());
+            request = format!("{}\n{}", id, sysinfo::get_info());
             thread::sleep(Duration::from_millis(1500));
         }
         server_mode_switch
@@ -388,56 +394,4 @@ where
         }
         None => Some(x),
     }
-}
-
-fn sysinfo() -> String {
-    #![allow(unused)]
-    let mut sys = System::new_all();
-    let mut bandwith: u64 = 0;
-    let mut freebandwith: u64 = 0;
-    let mut disk_space = 0;
-    sys.refresh_all();
-
-    let mut networks = Networks::new_with_refreshed_list();
-    for (interface_name, network) in &networks {
-        bandwith = network.total_transmitted() + network.total_received();
-    }
-
-    networks.refresh();
-    for (interface_name, network) in &networks {
-        freebandwith = bandwith - (network.transmitted() + network.received());
-    }
-
-    let disks = Disks::new_with_refreshed_list();
-    if let Some(disk) = disks.list().iter().next(){
-        disk_space = disk.available_space() / 1_000_000_000;
-    }
-
-    let mut s = System::new_with_specifics(
-        RefreshKind::new().with_cpu(CpuRefreshKind::everything())
-    );
-
-    // Wait a bit because CPU usage is based on diff.
-    std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
-    // Refresh CPUs again.
-    s.refresh_cpu();
-
-    let mut cpu_avrg = 0.0;
-    let logic_cores = s.cpus().len() as f32;
-    for cpu in s.cpus() {
-        cpu_avrg += cpu.cpu_usage();
-    }
-    cpu_avrg /= logic_cores;
-    cpu_avrg.trunc();
-
-    let sysinfo = format!(
-        "{}\n{:.0}\n{}\n{}\n{}\n{}",
-        System::host_name().unwrap(),
-        cpu_avrg,
-        sys.used_memory() / 1_000_000,
-        freebandwith / 1_000_000,
-        disk_space,
-        sys.total_memory() / 1_000_000
-    );
-    sysinfo
 }
