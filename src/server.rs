@@ -22,7 +22,6 @@ struct Server {
     termination_signal: Arc<Mutex<bool>>,
     migration_mode: Arc<Mutex<bool>>,
     host_data: Arc<Mutex<HashMap<String, Vec<String>>>>,
-    host_dir: Arc<Mutex<HashMap<String, String>>>,
     new_server_id: Arc<Mutex<String>>,
 }
 
@@ -56,7 +55,6 @@ impl ServerWrapper {
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
                 host_data: Arc::new(Mutex::new(HashMap::new())),
-                host_dir: Arc::new(Mutex::new(HashMap::new())),
                 new_server_id: Arc::new(Mutex::new(String::new())),
             }),
         }
@@ -200,7 +198,8 @@ impl Server {
                     ip = String::from(&*guard);
                 }
             }
-            request = format!("{}\n{}", id, sysinfo::get_info());
+            let ip = manage_mutex(self.server_ip.clone(), None).unwrap();
+            request = format!("{}\n{}\n{}", id, ip, sysinfo::get_info());
             thread::sleep(Duration::from_millis(1500));
         }
         server_mode_switch
@@ -246,6 +245,9 @@ impl Server {
 
         loop {
             thread::sleep(Duration::from_secs(3));
+
+
+
             self.sender
                 .send(manage_mutex(self.host_data.clone(), None).unwrap())
                 .unwrap();
@@ -280,10 +282,11 @@ impl Server {
                             } else {
                                 let fallback_ip;
                                 {
-                                    let guard = self.host_dir.lock().unwrap();
+                                    let guard = self.host_data.lock().unwrap();
+
                                     fallback_ip = guard
                                         .get(&msg[1])
-                                        .unwrap()
+                                        .unwrap()[0]
                                         .to_owned();
                                 }
     
@@ -352,11 +355,6 @@ impl Server {
                         id,
                         stream.peer_addr().unwrap().ip().to_string()
                     );
-                    hosts_dir.insert(id, stream.peer_addr().unwrap().ip().to_string());
-                    {
-                        let mut guard = self.host_dir.lock().unwrap();
-                        *guard = hosts_dir.clone();
-                    }
                 } else {
                     {
                         let mut req = http_request.clone();
