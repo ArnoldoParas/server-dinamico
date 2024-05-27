@@ -1,8 +1,10 @@
 use egui::{RichText, ScrollArea};
 use std::{
-    collections::HashMap, fmt::format, sync::mpsc::{self, Sender}
+    collections::HashMap,
+    sync::mpsc::{self, Sender}
 };
 use sysinfo::System;
+
 
 // #[derive(Default)]
 pub struct App {
@@ -100,9 +102,6 @@ impl App {
                             };
                         });
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&self.clients.get(k).unwrap()[0]));
-                        });
-                        ui.vertical_centered(|ui| {
                             ui.label(RichText::new(&self.clients.get(k).unwrap()[1]));
                         });
                         ui.vertical_centered(|ui| {
@@ -115,14 +114,17 @@ impl App {
                             ui.label(RichText::new(&self.clients.get(k).unwrap()[4]));
                         });
                         ui.vertical_centered(|ui| {
-                            if &self.clients.get(k).unwrap()[6] == "connected" {
+                            ui.label(RichText::new(&self.clients.get(k).unwrap()[5]));
+                        });
+                        ui.vertical_centered(|ui| {
+                            if &self.clients.get(k).unwrap()[7] == "connected" {
                                 ui.label(
-                                    RichText::new(&self.clients.get(k).unwrap()[6])
+                                    RichText::new(&self.clients.get(k).unwrap()[7])
                                         .color(egui::Color32::GREEN),
                                 );
                             } else {
                                 ui.label(
-                                    RichText::new(&self.clients.get(k).unwrap()[6])
+                                    RichText::new(&self.clients.get(k).unwrap()[7])
                                         .color(egui::Color32::RED),
                                 );
                             }
@@ -147,11 +149,11 @@ impl App {
 
         self.ranked_clients.clear();
         for (k, v) in &self.clients {
-            let total_mem = &v[5].to_owned().parse::<f32>().unwrap();
-            let current_mem = &v[2].to_owned().parse::<f32>().unwrap();
+            let total_mem = &v[6].to_owned().parse::<f32>().unwrap();
+            let current_mem = &v[3].to_owned().parse::<f32>().unwrap();
             let ram_percentage = (current_mem / total_mem * 10000.0).trunc() / 100.0;
 
-            let cpu_score = match &v[1].parse::<f32>().unwrap() {
+            let cpu_score = match &v[2].parse::<f32>().unwrap() {
                 x if (0.0..=10.0).contains(x) => 3.0 * 0.6,
                 x if (11.0..=20.0).contains(x) => 5.0 * 0.6,
                 x if (21.0..=30.0).contains(x) => 6.0 * 0.6,
@@ -188,11 +190,11 @@ impl App {
         match first_place_key.is_empty() {
             true => (),
             false => {
-                if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2
-                    let msg = format!("First\n{}", self.ranked_clients[0].0.clone());
-                    self.sender.send(msg).unwrap();
-                    self.clear_hash = true;
-                } 
+                // if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2
+                //     let msg = format!("First\n{}", self.ranked_clients[0].0.clone());
+                //     self.sender.send(msg).unwrap();
+                //     self.clear_hash = true;
+                // } 
             }
         }
 
