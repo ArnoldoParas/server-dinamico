@@ -168,7 +168,6 @@ impl Server {
                 .write_all(request.as_bytes())
                 .expect("fallo en enviar el mensaje");
             stream.shutdown(Shutdown::Write).unwrap();
-            println!("message sent");
 
             let buf_reader = BufReader::new(&mut stream);
             let http_response: Vec<_> = buf_reader
@@ -302,6 +301,10 @@ impl Server {
                 );
             }
 
+            {
+                
+            }
+
             self.sender
                 .send(manage_mutex(self.host_data.clone(), None).unwrap())
                 .unwrap();
@@ -350,7 +353,6 @@ impl Server {
                         _ => ()
                     }
                 }
-                thread::sleep(Duration::from_millis(500));
             }
         }
     }
