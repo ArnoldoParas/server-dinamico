@@ -15,7 +15,7 @@ mod tests;
 struct Server {
     sender: mpsc::Sender<HashMap<String, Vec<String>>>,
     reciver: Mutex<mpsc::Receiver<String>>,
-    _id: String,
+    id: Arc<Mutex<String>>,
     server_ip: Arc<Mutex<String>>,
     current_ip: Arc<Mutex<String>>,
     fallback_ip: Arc<Mutex<String>>,
@@ -48,7 +48,7 @@ impl ServerWrapper {
             server: Arc::new(Server {
                 sender: tx,
                 reciver: Mutex::new(rx),
-                _id: String::new(),
+                id: Arc::new(Mutex::new(String::new())),
                 server_ip: Arc::new(Mutex::new(String::new())),
                 current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 fallback_ip: Arc::new(Mutex::new(String::new())),
@@ -88,9 +88,27 @@ impl Server {
         manage_mutex(self.termination_signal.clone(), Some(false));
 
         let mut ip: String = manage_mutex(self.current_ip.clone(), None).unwrap();
+        let mut request;
 
         let mut id = String::from("No-Id");
-        let mut request = String::from(&id);
+
+        let mut guard = self.id.lock().unwrap();
+        if !guard.is_empty() {
+            id = guard.to_owned();
+            request = format!("{}\n{}\n{}",
+                id,
+                manage_mutex(self.server_ip.clone(), None).unwrap(),
+                sysinfo::get_info()
+            );
+        } else {
+            request = format!("{}\nNo-Ip\n{}",
+                id,
+                sysinfo::get_info()
+            );
+        }
+
+
+
         let mut last_server_response: HashMap<String, String> = HashMap::new();
         let mut connection_attempts: u8 = 0;
         let mut fallback_server_state = false;
@@ -150,6 +168,7 @@ impl Server {
                 .write_all(request.as_bytes())
                 .expect("fallo en enviar el mensaje");
             stream.shutdown(Shutdown::Write).unwrap();
+            println!("message sent");
 
             let buf_reader = BufReader::new(&mut stream);
             let http_response: Vec<_> = buf_reader
@@ -198,20 +217,33 @@ impl Server {
                     ip = String::from(&*guard);
                 }
             }
-            let ip = manage_mutex(self.server_ip.clone(), None).unwrap();
-            request = format!("{}\n{}\n{}", id, ip, sysinfo::get_info());
+
+            request = format!("{}\n{}\n{}",
+                id,
+                manage_mutex(self.server_ip.clone(), None).unwrap(),
+                sysinfo::get_info()
+            );
             thread::sleep(Duration::from_millis(1500));
         }
         server_mode_switch
     }
 
     fn tcp_server(&self) -> bool {
+        {
+            let mut guard = self.id.lock().unwrap();
+            if guard.is_empty() {
+                *guard = String::from(Uuid::new_v4());
+            }
+        }
+        
         let addr = manage_mutex(self.current_ip.clone(), None).unwrap();
-
+        
         let mut hosts_dir: HashMap<String, String> = HashMap::new();
-
+        
         let listener = TcpListener::bind(&addr).unwrap();
         println!("---\nListening on {}\n---", &addr);
+        
+        manage_mutex(self.server_ip.clone(), Some(listener.local_addr().unwrap().ip().to_string()));
 
         for stream in listener.incoming() {
             {
@@ -242,11 +274,33 @@ impl Server {
     fn pulse(&self) {
         let current_ip = manage_mutex(self.current_ip.clone(), None).unwrap();
         let guard = self.reciver.lock().unwrap();
+        let id_guard = self.id.lock().unwrap();
 
         loop {
             thread::sleep(Duration::from_secs(3));
 
+            { // Send the server system information to the UI
+                let mut host_data_guard = self.host_data.lock().unwrap();
+                let server_ip_guard = self.server_ip.lock().unwrap();
+                let mut req: Vec<String> = Vec::new();
 
+                req.push(server_ip_guard.to_owned().to_string());
+                let server_system_info: Vec<String> = sysinfo::get_info()
+                    .lines()
+                    .map(|line| line.to_string())
+                    .take_while(|line| !line.is_empty())
+                    .collect();
+                
+                for line in server_system_info {
+                    req.push(line)
+                }
+                req.push("connected".to_string());
+
+                host_data_guard.insert(
+                    id_guard.to_owned().to_string(),
+                    req
+                );
+            }
 
             self.sender
                 .send(manage_mutex(self.host_data.clone(), None).unwrap())
