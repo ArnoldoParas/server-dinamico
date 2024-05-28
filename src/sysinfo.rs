@@ -4,8 +4,11 @@ use sysinfo::{
   RefreshKind,
   System
 };
+use chrono::Utc;
 
 pub fn get_info() -> String {
+  let time = Utc::now().time();
+  println!("{}", time.format("%H:%M:%S"));
   let sysinfo = format!(
       "{}\n{:.0}\n{}\n{}\n{}\n{}",
       host_name(),
@@ -13,7 +16,7 @@ pub fn get_info() -> String {
       memory(),
       bandwidth(),
       disk(),
-      total_mem()
+      total_mem(),
   );
   sysinfo
 }
