@@ -187,14 +187,17 @@ impl App {
         self.ranked_clients
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
-        match first_place_key.is_empty() {
-            true => (),
-            false => {
-                // if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2
-                //     let msg = format!("First\n{}", self.ranked_clients[0].0.clone());
-                //     self.sender.send(msg).unwrap();
-                //     self.clear_hash = true;
-                // } 
+
+        if !first_place_key.is_empty() {
+            if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2 hosts
+                let client = &self.ranked_clients[0].0;
+                let client_status = &self.clients.get(client).unwrap()[8];
+                
+                if client_status == "connected" {
+                    let msg = format!("First\n{}", client);
+                    self.sender.send(msg).unwrap();
+                    self.clear_hash = true;
+                }
             }
         }
 
