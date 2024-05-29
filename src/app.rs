@@ -117,14 +117,14 @@ impl App {
                             ui.label(RichText::new(&self.clients.get(k).unwrap()[5]));
                         });
                         ui.vertical_centered(|ui| {
-                            if &self.clients.get(k).unwrap()[7] == "connected" {
+                            if &self.clients.get(k).unwrap()[8] == "connected" {
                                 ui.label(
-                                    RichText::new(&self.clients.get(k).unwrap()[7])
+                                    RichText::new(&self.clients.get(k).unwrap()[8])
                                         .color(egui::Color32::GREEN),
                                 );
                             } else {
                                 ui.label(
-                                    RichText::new(&self.clients.get(k).unwrap()[7])
+                                    RichText::new(&self.clients.get(k).unwrap()[8])
                                         .color(egui::Color32::RED),
                                 );
                             }
