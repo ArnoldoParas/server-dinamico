@@ -305,15 +305,16 @@ impl Server {
             { // check if host is still connected
                 let mut guard = self.host_data.lock().unwrap();
                 let pulse_time: DateTime<Utc> = Utc::now();
-                println!("Pulse time: {}", pulse_time);
                 
                 for (key, value) in &mut *guard {
                     let mut fecha_datetime = DateTime::parse_from_str(&value[7].as_str(), "%+") // %Y-%m-%d %H:%M:%S%.f %Z
                         .unwrap()
                         .with_timezone(&Utc);
-                    // : chrono::Duration
                     let diff = (pulse_time - fecha_datetime).num_seconds();
-                    println!("Diferencia: {} segundos", diff);
+
+                    if value.len() == 9 {
+                        value.pop();
+                    }
                     if diff >= 6 {
                         value.push(String::from("disconnected"));
                     } else {
