@@ -51,3 +51,6 @@ In the case that there's no last response it means that you are the first device
 This can also be used to access the last message from the server in witch it should containt the ip address to the fallback server.
 
 [^2]: Maybe it should try 3 times in an inteval of 1.5 sec.
+---
+
+TEST the None fallback server in case of second place disconnected
