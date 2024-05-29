@@ -4,19 +4,20 @@ use sysinfo::{
   RefreshKind,
   System
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 
 pub fn get_info() -> String {
-  let time = Utc::now().time();
-  println!("{}", time.format("%H:%M:%S"));
+  let time: DateTime<Utc> = Utc::now();
+  
   let sysinfo = format!(
-      "{}\n{:.0}\n{}\n{}\n{}\n{}",
+      "{}\n{:.0}\n{}\n{}\n{}\n{}\n{}",
       host_name(),
       cpu_average(),
       memory(),
       bandwidth(),
       disk(),
       total_mem(),
+      time
   );
   sysinfo
 }
