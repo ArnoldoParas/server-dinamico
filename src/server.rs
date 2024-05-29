@@ -51,7 +51,7 @@ impl ServerWrapper {
                 reciver: Mutex::new(rx),
                 id: Arc::new(Mutex::new(String::new())),
                 server_ip: Arc::new(Mutex::new(String::new())),
-                current_ip: Arc::new(Mutex::new(String::from("10.100.42.213:3012"))),
+                current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
                 fallback_ip: Arc::new(Mutex::new(String::new())),
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
