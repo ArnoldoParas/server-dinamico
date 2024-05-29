@@ -198,12 +198,18 @@ impl App {
             }
         }
 
+        // check second place to get a fallback server
         if self.ranked_clients.len() >= 2 {
-            let msg = format!("Second\n{}", self.ranked_clients[1].0.clone());
-            self.sender.send(msg).unwrap();
-        } else {
-            let msg = format!("Second\nNone");
-            self.sender.send(msg).unwrap();
+            let client =  &self.ranked_clients[1].0;
+            let client_status = &self.clients.get(client).unwrap()[8];
+
+            if client_status == "connected" {
+                let msg = format!("Second\n{}", client);
+                self.sender.send(msg).unwrap();
+            } else {
+                let msg = format!("Second\nNone");
+                self.sender.send(msg).unwrap();
+            }
         }
 
     }
