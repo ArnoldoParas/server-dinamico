@@ -9,6 +9,7 @@ use std::{
 };
 use crate::sysinfo;
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 mod tests;
 
@@ -50,7 +51,7 @@ impl ServerWrapper {
                 reciver: Mutex::new(rx),
                 id: Arc::new(Mutex::new(String::new())),
                 server_ip: Arc::new(Mutex::new(String::new())),
-                current_ip: Arc::new(Mutex::new(String::from("25.55.184.100:3012"))),
+                current_ip: Arc::new(Mutex::new(String::from("10.100.42.213:3012"))),
                 fallback_ip: Arc::new(Mutex::new(String::new())),
                 termination_signal: Arc::new(Mutex::new(false)),
                 migration_mode: Arc::new(Mutex::new(false)),
@@ -293,16 +294,32 @@ impl Server {
                 for line in server_system_info {
                     req.push(line)
                 }
-                req.push("connected".to_string());
-
+                
                 host_data_guard.insert(
                     id_guard.to_owned().to_string(),
                     req
                 );
             }
-
-            {
+            
+            
+            { // check if host is still connected
+                let mut guard = self.host_data.lock().unwrap();
+                let pulse_time: DateTime<Utc> = Utc::now();
+                println!("Pulse time: {}", pulse_time);
                 
+                for (key, value) in &mut *guard {
+                    let mut fecha_datetime = DateTime::parse_from_str(&value[7].as_str(), "%+") // %Y-%m-%d %H:%M:%S%.f %Z
+                        .unwrap()
+                        .with_timezone(&Utc);
+                    // : chrono::Duration
+                    let diff = (pulse_time - fecha_datetime).num_seconds();
+                    println!("Diferencia: {} segundos", diff);
+                    if diff >= 6 {
+                        value.push(String::from("disconnected"));
+                    } else {
+                        value.push(String::from("connected"));
+                    }
+                }
             }
 
             self.sender
@@ -416,7 +433,6 @@ impl Server {
                         let mut req = http_request.clone();
                         let k = req[0].clone();
                         req.remove(0);
-                        req.push("connected".to_string());
                         let mut guard = self.host_data.lock().unwrap();
                         guard.insert(k, req);
                     }
