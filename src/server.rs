@@ -9,7 +9,7 @@ use std::{
 };
 use crate::sysinfo;
 use uuid::Uuid;
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 
 mod tests;
 
