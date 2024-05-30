@@ -53,4 +53,5 @@ This can also be used to access the last message from the server in witch it sho
 [^2]: Maybe it should try 3 times in an inteval of 1.5 sec.
 ---
 
-TEST the None fallback server in case of second place disconnected
+There's a bug in witch if in the first pulse of the server the server doesnt end up in the first place then  when the server ends up in the first place it's going to try to
+switch to himself. This also means that the host in the fist place will never get to switch to a server.
