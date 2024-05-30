@@ -108,14 +108,12 @@ impl Server {
             );
         }
 
-
-
         let mut last_server_response: HashMap<String, String> = HashMap::new();
         let mut connection_attempts: u8 = 0;
         let mut fallback_server_state = false;
         loop {
             let mut stream;
-            match dbg!(TcpStream::connect(&ip)) {
+            match TcpStream::connect(&ip) {
                 Ok(s) => {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
@@ -260,10 +258,10 @@ impl Server {
             let guard = self.migration_mode.lock().unwrap();
             match *guard {
                 true => {
-                    self.handle_conecction(stream, &mut hosts_dir, true);
+                    self.handle_conecction(stream, true);
                     continue;
                 }
-                false => self.handle_conecction(stream, &mut hosts_dir, false),
+                false => self.handle_conecction(stream, false),
             }
         }
         let mut guard = self.host_data.lock().unwrap();
@@ -276,7 +274,7 @@ impl Server {
         let guard = self.reciver.lock().unwrap();
         let id_guard = self.id.lock().unwrap();
 
-        loop {
+        'outer: loop {
             thread::sleep(Duration::from_secs(3));
 
             { // Send the server system information to the UI
@@ -338,7 +336,7 @@ impl Server {
     
                     match msg[0].as_str() {
                         "First" => {
-                            manage_mutex(self.new_server_id.clone(), Some(msg[1].to_owned()));
+                            manage_mutex(self.new_server_id.clone(), dbg!(Some(msg[1].to_owned())));
                             manage_mutex(self.migration_mode.clone(), Some(true));
                             thread::sleep(Duration::from_secs(3));
             
@@ -349,7 +347,7 @@ impl Server {
             
                             manage_mutex(self.migration_mode.clone(), Some(false));
             
-                            break;
+                            break 'outer;
                         },
                         "Second" => {
                             if msg[1] == "None" {
@@ -378,7 +376,6 @@ impl Server {
     fn handle_conecction(
         &self,
         mut stream: TcpStream,
-        hosts_dir: &mut HashMap<String, String>,
         migration: bool,
     ) {
         let buf_reader = BufReader::new(&mut stream);
@@ -395,9 +392,10 @@ impl Server {
         // If true, the server is in migration mode
         match migration {
             true => {
-                let new_server_ip = hosts_dir
+                let host_data_guard = self.host_data.lock().unwrap();
+                let new_server_ip = host_data_guard
                     .get(&manage_mutex(self.new_server_id.clone(), None).unwrap())
-                    .unwrap()
+                    .unwrap()[0]
                     .to_owned();
 
                 let host_ip = stream.peer_addr().unwrap().ip().to_string();
@@ -405,7 +403,7 @@ impl Server {
                 if host_ip == new_server_ip {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!(
-                        "State: OK\nSwitchToServer: true\nNewServer: None\nFallback-Server: None\nId: {}",
+                        "State: OK\nSwitch-To-Server: true\nNewServer: None\nFallback-Server: None\nId: {}",
                         http_request[0]
                     );
 
@@ -414,7 +412,7 @@ impl Server {
                 } else {
                     let fallback_server_ip = manage_mutex(self.fallback_ip.clone(), None).unwrap();
                     response = format!(
-                        "State: Unauthorized\nSwitchToServer: false\nNewServer: {}\nFallback-Server: {}\nId: {}",
+                        "State: Unauthorized\nSwitchToServer: false\nNew-Server: {}\nFallback-Server: {}\nId: {}",
                         new_server_ip,
                         fallback_server_ip,
                         http_request[0]
