@@ -188,18 +188,18 @@ impl App {
             .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
 
-        if !first_place_key.is_empty() {
-            if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2 hosts
-                let client = &self.ranked_clients[0].0;
-                let client_status = &self.clients.get(client).unwrap()[8];
+        // if !first_place_key.is_empty() {
+        //     if self.ranked_clients[0].0 != first_place_key { // hay un cambio lo que significa que minimo hay 2 hosts
+        //         let client = &self.ranked_clients[0].0;
+        //         let client_status = &self.clients.get(client).unwrap()[8];
                 
-                if client_status == "connected" {
-                    let msg = format!("First\n{}", client);
-                    self.sender.send(msg).unwrap();
-                    self.clear_hash = true;
-                }
-            }
-        }
+        //         if client_status == "connected" {
+        //             let msg = format!("First\n{}", client);
+        //             self.sender.send(msg).unwrap();
+        //             self.clear_hash = true;
+        //         }
+        //     }
+        // }
 
         // check second place to get a fallback server
         if self.ranked_clients.len() >= 2 {
