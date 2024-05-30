@@ -313,7 +313,7 @@ impl Server {
                     if value.len() == 9 {
                         value.pop();
                     }
-                    if dbg!(dbg!(diff) >= 6) {
+                    if dbg!(dbg!(dbg!(diff)) >= 6) {
                         value.push(String::from("disconnected"));
                     } else {
                         value.push(String::from("connected"));
