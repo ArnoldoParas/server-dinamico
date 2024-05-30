@@ -224,7 +224,7 @@ impl Server {
                 manage_mutex(self.server_ip.clone(), None).unwrap(),
                 sysinfo::get_info()
             );
-            thread::sleep(Duration::from_millis(1500));
+            thread::sleep(Duration::from_secs(1));
         }
         server_mode_switch
     }
@@ -316,7 +316,7 @@ impl Server {
                     if value.len() == 9 {
                         value.pop();
                     }
-                    if dbg!(diff >= 6) {
+                    if dbg!(diff >= 20) {
                         value.push(String::from("disconnected"));
                     } else {
                         value.push(String::from("connected"));
