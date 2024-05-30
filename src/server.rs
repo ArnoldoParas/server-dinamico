@@ -9,7 +9,7 @@ use std::{
 };
 use crate::sysinfo;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
 
 mod tests;
 
@@ -163,10 +163,13 @@ impl Server {
                     }
                 }
             }
+            
             stream
                 .write_all(request.as_bytes())
                 .expect("fallo en enviar el mensaje");
+
             stream.shutdown(Shutdown::Write).unwrap();
+            println!("msg sent: {}", Utc::now());
 
             let buf_reader = BufReader::new(&mut stream);
             let http_response: Vec<_> = buf_reader
