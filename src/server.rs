@@ -313,7 +313,7 @@ impl Server {
                     if value.len() == 9 {
                         value.pop();
                     }
-                    if diff >= 6 {
+                    if dbg!(dbg!(diff) >= 6) {
                         value.push(String::from("disconnected"));
                     } else {
                         value.push(String::from("connected"));
@@ -403,7 +403,7 @@ impl Server {
                 if host_ip == new_server_ip {
                     let new_ip = stream.peer_addr().unwrap().ip().to_string();
                     response = format!(
-                        "State: OK\nSwitch-To-Server: true\nNewServer: None\nFallback-Server: None\nId: {}",
+                        "State: OK\nSwitch-To-Server: true\nNew-Server: None\nFallback-Server: None\nId: {}",
                         http_request[0]
                     );
 
