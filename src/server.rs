@@ -146,7 +146,7 @@ impl Server {
                             },
                             server_ip => {
                                 println!("Fallback server ip: {}", server_ip);
-                                if *self.server_ip.lock().unwrap() == server_ip {
+                                if dbg!(*self.server_ip.lock().unwrap() == dbg!(server_ip)) {
                                     println!("Switching to server...");
                                     let mut guard = self.current_ip.lock().unwrap();
                                     *guard = format!("{}:3012", server_ip);
@@ -156,6 +156,7 @@ impl Server {
                                 ip = manage_mutex(self.current_ip.clone(), Some(server_ip.to_string())).unwrap();
                                 connection_attempts = 0;
                                 fallback_server_state = true;
+                                last_server_response.clear();
                                 continue;
                             }
                         } 
