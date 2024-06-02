@@ -15,7 +15,7 @@ To do list
 - [ ] Configure the GUI 
   - [x] Set the GUI refresh rate to 3-4 sec
   - [x] Add Sender/Reciver from the GUI to the Tcp module
-  - [ ] Make a host ui
+  - [ ] Make a host ui (Deprecated)
 
 ---
 
@@ -24,7 +24,7 @@ To do list
 To-do list
 
 - [x] add a ID argument in the server struct.
-- [ ] Find a way to diferienciate a **ConnectionRefused** error from being the first server and the one when the server is down. [^1]
+- [x] Find a way to diferienciate a **ConnectionRefused** error from being the first server and the one when the server is down. [^1]
 - [x] Add the re-try feature in case that the server is down. [^2]
 
 ### Flow of the feature
@@ -45,6 +45,12 @@ If server refuse the connection check the last response from the server.
 > 
 > Become the server.
 
+### Errors found
+
+* There's a bug in witch if in the first pulse of the server the server doesnt end up in the first place then  when the server ends up in the first place it's going to try to
+switch to himself. This also means that the host in the fist place will never get to switch to a server.
+
+* Seems to be that if the server shuts down in the middle of handeling a connection the host recives a error type not supported in code.
 
 [^1]: The **ConnectionRefused** errors may be diferenciated by copying the last response from the server.
 In the case that there's no last response it means that you are the first device.
@@ -52,6 +58,3 @@ This can also be used to access the last message from the server in witch it sho
 
 [^2]: Maybe it should try 3 times in an inteval of 1.5 sec.
 ---
-
-There's a bug in witch if in the first pulse of the server the server doesnt end up in the first place then  when the server ends up in the first place it's going to try to
-switch to himself. This also means that the host in the fist place will never get to switch to a server.
