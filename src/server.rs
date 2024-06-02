@@ -90,7 +90,6 @@ impl Server {
 
         let mut ip: String = manage_mutex(self.current_ip.clone(), None).unwrap();
         let mut request;
-
         let mut id = String::from("No-Id");
 
         let mut guard = self.id.lock().unwrap();
@@ -169,7 +168,6 @@ impl Server {
                 .expect("fallo en enviar el mensaje");
 
             stream.shutdown(Shutdown::Write).unwrap();
-            println!("msg sent: {}", Utc::now());
 
             let buf_reader = BufReader::new(&mut stream);
             let http_response: Vec<_> = buf_reader
@@ -239,8 +237,7 @@ impl Server {
         
         let addr = manage_mutex(self.current_ip.clone(), None).unwrap();
         
-        let mut hosts_dir: HashMap<String, String> = HashMap::new();
-        
+        // let mut hosts_dir: HashMap<String, String> = HashMap::new();
         let listener = TcpListener::bind(&addr).unwrap();
         println!("---\nListening on {}\n---", &addr);
         
