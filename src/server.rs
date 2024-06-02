@@ -153,7 +153,7 @@ impl Server {
                                     server_mode_switch = true;
                                     break;
                                 }
-                                ip = manage_mutex(self.current_ip.clone(), Some(server_ip.to_string())).unwrap();
+                                ip = manage_mutex(self.current_ip.clone(), Some(format!("{}:3012", server_ip))).unwrap();
                                 connection_attempts = 0;
                                 fallback_server_state = true;
                                 last_server_response.clear();
