@@ -52,6 +52,12 @@ switch to himself. This also means that the host in the fist place will never ge
 
 * Seems to be that if the server shuts down in the middle of handeling a connection the host recives a error type not supported in code.
 
+### Possible errors
+
+* The time set to determine the host status is 20 sec but the server pulse is 3 sec so there might be a chance that a host diconnect from the server and
+the server in one of the 6 pulses that will pass before the host is set to desconnected it might end up in first or second place and the server might try to 
+switch to a host that is already disconnected or set a fallback server to a host that is already disconnected.
+
 [^1]: The **ConnectionRefused** errors may be diferenciated by copying the last response from the server.
 In the case that there's no last response it means that you are the first device.
 This can also be used to access the last message from the server in witch it should containt the ip address to the fallback server.
