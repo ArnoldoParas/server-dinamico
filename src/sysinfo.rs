@@ -80,7 +80,7 @@ fn disk() -> u64 {
   disk_space
 }
 
-fn total_mem() -> u64{
+fn total_mem() -> u64 {
   let mut sys = System::new_all();
   sys.refresh_all();
 
