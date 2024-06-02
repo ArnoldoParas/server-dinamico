@@ -112,7 +112,7 @@ impl Server {
         let mut fallback_server_state = false;
         loop {
             let mut stream;
-            match dbg!(TcpStream::connect(&ip)) {
+            match TcpStream::connect(&ip) {
                 Ok(s) => {
                     connection_attempts += 1;
                     println!("connection attempts: {}, SUCCESS", connection_attempts);
@@ -146,7 +146,7 @@ impl Server {
                             },
                             server_ip => {
                                 println!("Fallback server ip: {}", server_ip);
-                                if dbg!(*self.server_ip.lock().unwrap() == dbg!(server_ip)) {
+                                if *self.server_ip.lock().unwrap() == server_ip {
                                     println!("Switching to server...");
                                     let mut guard = self.current_ip.lock().unwrap();
                                     *guard = format!("{}:3012", server_ip);
