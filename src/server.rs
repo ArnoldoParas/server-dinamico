@@ -308,12 +308,12 @@ impl Server {
                     let mut fecha_datetime = DateTime::parse_from_str(&value[7].as_str(), "%+") // %Y-%m-%d %H:%M:%S%.f %Z
                         .unwrap()
                         .with_timezone(&Utc);
-                    let diff = (dbg!(pulse_time) - dbg!(fecha_datetime)).num_seconds();
+                    let diff = (pulse_time - fecha_datetime).num_seconds();
 
                     if value.len() == 9 {
                         value.pop();
                     }
-                    if dbg!(diff >= 20) {
+                    if diff >= 20 {
                         value.push(String::from("disconnected"));
                     } else {
                         value.push(String::from("connected"));
@@ -388,7 +388,6 @@ impl Server {
         println!("Request: {:#?}", http_request);
 
         let response;
-
         // If true, the server is in migration mode
         match migration {
             true => {
