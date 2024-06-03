@@ -154,16 +154,16 @@ impl App {
             let ram_percentage = (current_mem / total_mem * 10000.0).trunc() / 100.0;
 
             let cpu_score = match &v[2].parse::<f32>().unwrap() {
-                x if (0.0..=10.0).contains(x) => 1.0 * 0.6,
-                x if (11.0..=20.0).contains(x) => 2.0 * 0.6,
-                x if (21.0..=30.0).contains(x) => 3.0 * 0.6,
-                x if (31.0..=40.0).contains(x) => 4.0 * 0.6,
-                x if (41.0..=50.0).contains(x) => 5.0 * 0.6,
-                x if (51.0..=60.0).contains(x) => 6.0 * 0.6,
-                x if (61.0..=70.0).contains(x) => 7.0 * 0.6,
-                x if (71.0..=80.0).contains(x) => 8.0 * 0.6,
-                x if (81.0..=90.0).contains(x) => 9.0 * 0.6,
-                x if (91.0..=100.0).contains(x) => 10.0 * 0.6,
+                x if (0.0..=10.0).contains(x) => 10.0 * 0.6,
+                x if (11.0..=20.0).contains(x) => 9.0 * 0.6,
+                x if (21.0..=30.0).contains(x) => 8.0 * 0.6,
+                x if (31.0..=40.0).contains(x) => 7.0 * 0.6,
+                x if (41.0..=50.0).contains(x) => 6.0 * 0.6,
+                x if (51.0..=60.0).contains(x) => 5.0 * 0.6,
+                x if (61.0..=70.0).contains(x) => 4.0 * 0.6,
+                x if (71.0..=80.0).contains(x) => 3.0 * 0.6,
+                x if (81.0..=90.0).contains(x) => 2.0 * 0.6,
+                x if (91.0..=100.0).contains(x) => 1.0 * 0.6,
                 _ => 0.0,
             };
 
