@@ -1,6 +1,7 @@
 use sysinfo::{
   CpuRefreshKind,
-  Disks, Networks,
+  Disks, 
+  Networks,
   RefreshKind,
   System
 };
@@ -10,23 +11,23 @@ pub fn get_info() -> String {
   let time: DateTime<Utc> = Utc::now();
   
   let sysinfo = format!(
-      "{}\n{:.0}\n{}\n{}\n{}\n{}\n{}",
-      host_name(),
-      cpu_average(),
-      memory(),
-      bandwidth(),
-      disk(),
-      total_mem(),
-      time
+    "{}\n{:.0}\n{}\n{}\n{}\n{}\n{}",
+    host_name(),
+    cpu_average(),
+    memory(),
+    bandwidth(),
+    disk(),
+    total_mem(),
+    time // Dinamico
   );
   sysinfo
 }
 
-fn host_name() -> String {
+fn host_name() -> String { //Estatico
   System::host_name().unwrap()
 }
 
-fn cpu_average() -> f32 {
+fn cpu_average() -> f32 { //Dinamico
   let mut s = System::new_with_specifics(
     RefreshKind::new().with_cpu(CpuRefreshKind::everything())
   );
@@ -45,14 +46,14 @@ fn cpu_average() -> f32 {
   cpu_avrg.trunc()
 }
 
-fn memory() -> u64 {
+fn memory() -> u64 { // Dinamico
   let mut sys = System::new_all();
   sys.refresh_all();
 
   sys.used_memory() / 1_000_000
 }
 
-fn bandwidth() -> u64 {
+fn bandwidth() -> u64 { //Dinamico
   let mut bandwith: u64 = 0;
   let mut freebandwith: u64 = 0;
 
@@ -69,7 +70,7 @@ fn bandwidth() -> u64 {
   freebandwith / 1_000_000
 }
 
-fn disk() -> u64 {
+fn disk() -> u64 { // Estatico
   let mut disk_space = 0;
 
   let disks = Disks::new_with_refreshed_list();
@@ -80,7 +81,7 @@ fn disk() -> u64 {
   disk_space
 }
 
-fn total_mem() -> u64 {
+fn total_mem() -> u64 { // Estatico
   let mut sys = System::new_all();
   sys.refresh_all();
 
